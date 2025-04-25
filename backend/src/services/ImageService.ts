@@ -2,23 +2,24 @@
 import { Request } from 'express';
 import multer, { FileFilterCallback } from 'multer';
 import sharp from 'sharp';
-import path from 'path';
-import fs from 'fs';
+import { existsSync, mkdirSync, unlinkSync } from 'fs';
+import { join, extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { AppError } from '../middlewares/errorHandler';
 
-const uploadDir = path.join(__dirname, '../../uploads/produtos');
+const UPLOAD_DIR = join(__dirname, '../../uploads/produtos');
 
 // Cria diretório se não existir
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+if (!existsSync(UPLOAD_DIR)) {
+  mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir);
+    cb(null, UPLOAD_DIR);
   },
   filename: (req, file, cb) => {
-    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
+    const uniqueName = `${uuidv4()}${extname(file.originalname)}`;
     cb(null, uniqueName);
   }
 });
@@ -43,8 +44,8 @@ export const upload = multer({
 
 export class ImageService {
   static async processImage(file: Express.Multer.File): Promise<{ filename: string; url: string }> {
-    const filename = `prod-${Date.now()}${path.extname(file.originalname)}`;
-    const outputPath = path.join(uploadDir, filename);
+    const filename = `prod-${Date.now()}${extname(file.originalname)}`;
+    const outputPath = join(UPLOAD_DIR, filename);
     
     await sharp(file.path)
       .resize(800, 800, { fit: 'inside' })
@@ -52,7 +53,7 @@ export class ImageService {
       .toFile(outputPath);
 
     // Remove o arquivo original
-    fs.unlinkSync(file.path);
+    unlinkSync(file.path);
 
     return {
       filename,
@@ -61,13 +62,13 @@ export class ImageService {
   }
 
   static getImagePath(filename: string): string {
-    return path.join(uploadDir, filename);
+    return join(UPLOAD_DIR, filename);
   }
 
   static async deleteImage(filename: string): Promise<void> {
-    const imagePath = path.join(uploadDir, filename);
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
+    const imagePath = join(UPLOAD_DIR, filename);
+    if (existsSync(imagePath)) {
+      unlinkSync(imagePath);
     }
   }
 }

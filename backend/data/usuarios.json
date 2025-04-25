@@ -1,0 +1,28 @@
+[
+  {
+    "id": "1",
+    "nome": "Admin",
+    "email": "admin@admin.com",
+    "senha": "$2b$10$XOPbrlUPQdwdJUpSrIF6X.LbE14qsMmKGhM1A8W9iqDp3.3zJqKHy",
+    "role": "admin"
+  },
+  {
+    "nome": "lino",
+    "email": "linox999@gmail.com",
+    "senha": "$2b$10$7/1yyFpjLNLJjCSbtjUgLuMEU6DWfCQFQLATk4RxVfrsRsiQza/.u",
+    "id": "zz2n1l962",
+    "role": "admin"
+  },
+  {
+    "nome": "lin",
+    "email": "admin2@admin.com",
+    "senha": "$2b$10$ZAYj7pEsKS1eINmwJoZbq.tTrctl.I.As82m49vkFVmyBLQRvEkTa",
+    "id": "4ca9r3mwz"
+  },
+  {
+    "nome": "123",
+    "email": "linox9999@gmail.com",
+    "senha": "$2b$10$mw0/Vhr/nUvCI9bgAKZ74uZZHigLP6gcK6tEkzIyF4p6lAjGB651C",
+    "id": "jxmfigu4z"
+  }
+]

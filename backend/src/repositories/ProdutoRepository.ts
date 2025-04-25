@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, promises } from 'fs';
+import { join } from 'path';
 import { Produto } from '../types';
 
 export class ProdutoRepository {
@@ -7,23 +7,23 @@ export class ProdutoRepository {
   private readonly filePath: string;
 
   constructor() {
-    this.dataDir = path.join(__dirname, '../../data');
-    this.filePath = path.join(this.dataDir, 'produtos.json');
+    this.dataDir = join(__dirname, '../../data');
+    this.filePath = join(this.dataDir, 'produtos.json');
     this.initializeDataFile();
   }
 
   private initializeDataFile(): void {
-    if (!fs.existsSync(this.dataDir)) {
-      fs.mkdirSync(this.dataDir, { recursive: true });
+    if (!existsSync(this.dataDir)) {
+      mkdirSync(this.dataDir, { recursive: true });
     }
 
-    if (!fs.existsSync(this.filePath)) {
-      fs.writeFileSync(this.filePath, JSON.stringify([]));
+    if (!existsSync(this.filePath)) {
+      writeFileSync(this.filePath, JSON.stringify([]));
     }
   }
 
   async findAll(): Promise<Produto[]> {
-    const data = await fs.promises.readFile(this.filePath, 'utf-8');
+    const data = await promises.readFile(this.filePath, 'utf-8');
     return JSON.parse(data);
   }
 
@@ -42,13 +42,13 @@ export class ProdutoRepository {
       produtos.push(produto);
     }
 
-    await fs.promises.writeFile(this.filePath, JSON.stringify(produtos, null, 2));
+    await promises.writeFile(this.filePath, JSON.stringify(produtos, null, 2));
     return produto;
   }
 
   async delete(id: string): Promise<void> {
     const produtos = await this.findAll();
     const filteredProdutos = produtos.filter(p => p.id !== id);
-    await fs.promises.writeFile(this.filePath, JSON.stringify(filteredProdutos, null, 2));
+    await promises.writeFile(this.filePath, JSON.stringify(filteredProdutos, null, 2));
   }
 } 

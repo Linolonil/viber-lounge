@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Venda } from '../types';
+import { Venda } from '../types/Venda';
 
 export const validateVenda = (req: Request, res: Response, next: NextFunction): void => {
   const vendaData: Omit<Venda, 'id'> = req.body;

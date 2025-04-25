@@ -1,29 +1,29 @@
-import fs from 'fs';
-import path from 'path';
-import { Venda } from '../types';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, promises } from 'fs';
+import { join } from 'path';
+import { Venda } from '../types/Venda';
 
 export class VendaRepository {
   private readonly dataDir: string;
   private readonly filePath: string;
 
   constructor() {
-    this.dataDir = path.join(__dirname, '../../data');
-    this.filePath = path.join(this.dataDir, 'vendas.json');
+    this.dataDir = join(__dirname, '../../data');
+    this.filePath = join(this.dataDir, 'vendas.json');
     this.initializeDataFile();
   }
 
   private initializeDataFile(): void {
-    if (!fs.existsSync(this.dataDir)) {
-      fs.mkdirSync(this.dataDir, { recursive: true });
+    if (!existsSync(this.dataDir)) {
+      mkdirSync(this.dataDir, { recursive: true });
     }
 
-    if (!fs.existsSync(this.filePath)) {
-      fs.writeFileSync(this.filePath, JSON.stringify([]));
+    if (!existsSync(this.filePath)) {
+      writeFileSync(this.filePath, JSON.stringify([]));
     }
   }
 
   async findAll(): Promise<Venda[]> {
-    const data = await fs.promises.readFile(this.filePath, 'utf-8');
+    const data = await promises.readFile(this.filePath, 'utf-8');
     return JSON.parse(data);
   }
 
@@ -42,7 +42,7 @@ export class VendaRepository {
       vendas.push(venda);
     }
 
-    await fs.promises.writeFile(this.filePath, JSON.stringify(vendas, null, 2));
+    await promises.writeFile(this.filePath, JSON.stringify(vendas, null, 2));
     return venda;
   }
 } 

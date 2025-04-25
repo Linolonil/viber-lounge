@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { VendaService } from '../services/VendaService';
 import { AppError } from '../middlewares/errorHandler';
+import { readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { Venda, ItemVenda } from '../types/Venda';
+import { AuthRequest } from '../middlewares/authMiddleware';
 
 interface DadosGrafico {
   pix: number;
@@ -15,6 +19,28 @@ interface DadosGrafico {
   }>;
 }
 
+interface VendasPorUsuario {
+  usuarioId: string;
+  usuarioNome: string;
+  totalVendas: number;
+  totalValor: number;
+  vendas: Venda[];
+}
+
+const VENDAS_FILE = join(__dirname, '../../data/vendas.json');
+const PERIODOS_FILE = join(__dirname, '../../data/periodos-trabalho.json');
+
+interface PeriodoTrabalho {
+  id: string;
+  usuarioId: string;
+  usuarioNome: string;
+  dataInicio: string;
+  dataFim?: string;
+  status: 'aberto' | 'fechado';
+  totalVendas: number;
+  totalValor: number;
+}
+
 export class VendaController {
   private vendaService: VendaService;
 
@@ -22,23 +48,109 @@ export class VendaController {
     this.vendaService = vendaService || new VendaService();
   }
 
-  async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
+  private getVendas(): Venda[] {
     try {
+      const data = readFileSync(VENDAS_FILE, 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
+      return [];
+    }
+  }
+
+  private saveVendas(vendas: Venda[]): void {
+    writeFileSync(VENDAS_FILE, JSON.stringify(vendas, null, 2));
+  }
+
+  private getPeriodos(): PeriodoTrabalho[] {
+    try {
+      const data = readFileSync(PERIODOS_FILE, 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
+      return [];
+    }
+  }
+
+  private savePeriodos(periodos: PeriodoTrabalho[]): void {
+    writeFileSync(PERIODOS_FILE, JSON.stringify(periodos, null, 2));
+  }
+
+  private atualizarPeriodoTrabalho(venda: Venda): void {
+    const periodos = this.getPeriodos();
+    const periodoAtual = periodos.find(
+      p => p.id === venda.periodoId && p.status === 'aberto'
+    );
+
+    if (periodoAtual) {
+      periodoAtual.totalVendas += 1;
+      periodoAtual.totalValor += venda.total;
+      this.savePeriodos(periodos);
+    }
+  }
+
+  async getAll(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = req.user;
+      if (!user) {
+        next(new AppError(401, 'Usuário não autenticado'));
+        return;
+      }
+
+      const vendas = this.getVendas();
       
-      const vendas = await this.vendaService.getAll();
-      res.json(vendas);
+      // Se for admin, retorna vendas agrupadas por usuário
+      if (user.role === 'admin') {
+        const vendasPorUsuario = new Map<string, VendasPorUsuario>();
+
+        vendas.forEach(venda => {
+          const usuarioId = venda.usuarioId;
+          if (!vendasPorUsuario.has(usuarioId)) {
+            vendasPorUsuario.set(usuarioId, {
+              usuarioId: venda.usuarioId,
+              usuarioNome: venda.usuarioNome,
+              totalVendas: 0,
+              totalValor: 0,
+              vendas: []
+            });
+          }
+
+          const usuarioVendas = vendasPorUsuario.get(usuarioId)!;
+          usuarioVendas.totalVendas += 1;
+          usuarioVendas.totalValor += venda.total;
+          usuarioVendas.vendas.push(venda);
+        });
+
+        res.json(Array.from(vendasPorUsuario.values()));
+        return;
+      }
+
+      // Se não for admin, retorna apenas as vendas do usuário
+      const vendasFiltradas = vendas.filter(v => v.usuarioId === user.id);
+      res.json(vendasFiltradas);
     } catch (error) {
       next(new AppError(500, 'Erro ao buscar vendas'));
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      const user = req.user;
+      if (!user) {
+        next(new AppError(401, 'Usuário não autenticado'));
+        return;
+      }
+
       const { id } = req.params;
-      const venda = await this.vendaService.getById(id);
+      const vendas = this.getVendas();
+      const venda = vendas.find((v: Venda) => v.id === id);
       
       if (!venda) {
         next(new AppError(404, 'Venda não encontrada'));
+        return;
+      }
+
+      // Verifica se o usuário tem permissão para ver a venda
+      if (user.role !== 'admin' && venda.usuarioId !== user.id) {
+        next(new AppError(403, 'Você não tem permissão para ver esta venda'));
         return;
       }
 
@@ -48,17 +160,50 @@ export class VendaController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async create(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const vendaData = req.body;
-      
-      if (!vendaData.itens || vendaData.itens.length === 0) {
-        next(new AppError(400, 'A venda deve ter pelo menos um item'));
+      const user = req.user;
+      if (!user) {
+        next(new AppError(401, 'Usuário não autenticado'));
         return;
       }
 
-      const venda = await this.vendaService.create(vendaData);
-      res.status(201).json(venda);
+      // Verificar se existe um período de trabalho ativo para este usuário específico
+      const periodos = this.getPeriodos();
+      const periodoAtual = periodos.find(
+        p => p.usuarioId === user.id && p.status === 'aberto'
+      );
+
+      if (!periodoAtual) {
+        next(new AppError(400, 'É necessário iniciar um período de trabalho antes de realizar vendas'));
+        return;
+      }
+
+      const dataAtual = new Date();
+      const dataFormatada = dataAtual.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+
+      const venda: Omit<Venda, 'id'> = {
+        ...req.body,
+        data: dataFormatada,
+        usuarioId: user.id,
+        usuarioNome: user.email,
+        periodoId: periodoAtual.id,
+        status: 'ativa'
+      };
+
+      const vendas = this.getVendas();
+      const novaVenda: Venda = {
+        ...venda,
+        id: Math.random().toString(36).substr(2, 9)
+      };
+
+      vendas.push(novaVenda);
+      this.saveVendas(vendas);
+
+      // Atualiza o período de trabalho específico deste usuário
+      this.atualizarPeriodoTrabalho(novaVenda);
+
+      res.status(201).json(novaVenda);
     } catch (error) {
       if (error instanceof Error) {
         if (error.message.includes('Data inválida') || 
@@ -73,8 +218,14 @@ export class VendaController {
     }
   }
 
-  async getByDate(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getByDate(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      const user = req.user;
+      if (!user) {
+        next(new AppError(401, 'Usuário não autenticado'));
+        return;
+      }
+
       const { date } = req.params;
       
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -83,7 +234,36 @@ export class VendaController {
       }
 
       const vendas = await this.vendaService.getByDate(date);
-      res.json(vendas);
+      
+      // Se for admin, retorna vendas agrupadas por usuário
+      if (user.role === 'admin') {
+        const vendasPorUsuario = new Map<string, VendasPorUsuario>();
+
+        vendas.forEach(venda => {
+          const usuarioId = venda.usuarioId;
+          if (!vendasPorUsuario.has(usuarioId)) {
+            vendasPorUsuario.set(usuarioId, {
+              usuarioId: venda.usuarioId,
+              usuarioNome: venda.usuarioNome,
+              totalVendas: 0,
+              totalValor: 0,
+              vendas: []
+            });
+          }
+
+          const usuarioVendas = vendasPorUsuario.get(usuarioId)!;
+          usuarioVendas.totalVendas += 1;
+          usuarioVendas.totalValor += venda.total;
+          usuarioVendas.vendas.push(venda);
+        });
+
+        res.json(Array.from(vendasPorUsuario.values()));
+        return;
+      }
+
+      // Se não for admin, retorna apenas as vendas do usuário
+      const vendasFiltradas = vendas.filter(v => v.usuarioId === user.id);
+      res.json(vendasFiltradas);
     } catch (error) {
       next(new AppError(500, 'Erro ao buscar vendas por data'));
     }

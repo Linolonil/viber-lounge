@@ -2,13 +2,15 @@ export interface Produto {
   id: string;
   nome: string;
   preco: number;
-  imagem: string; // Base64 ou URL
+  imagemUrl: string; // Base64 ou URL
   quantidade: number; // Quantidade em estoque
 }
 
 export interface ItemVenda {
-  produto: Produto;
+  produtoId: string;
   quantidade: number;
+  precoUnitario: number;
+  produto?: Produto; // Opcional para compatibilidade com o frontend
 }
 
 export type FormaPagamento = "pix" | "credito" | "debito" | "dinheiro";
@@ -22,6 +24,9 @@ export interface Venda {
   formaPagamento: FormaPagamento;
   total: number;
   status: StatusVenda;
+  usuarioId: string;
+  usuarioNome: string;
+  periodoId: string;
 }
 
 export interface DadosGrafico {
@@ -34,4 +39,15 @@ export interface DadosGrafico {
     nome: string, 
     quantidade: number
   }[];
+}
+
+export interface PeriodoTrabalho {
+  id: string;
+  usuarioId: string;
+  usuarioNome: string;
+  dataInicio: string;
+  dataFim?: string;
+  status: 'aberto' | 'fechado';
+  totalVendas: number;
+  totalValor: number;
 }

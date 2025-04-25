@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { ProdutoService, VendaService, TraceService, generateId } from "@/services/storage";
+import { API_IMG, ProdutoService, VendaService, generateId } from "@/services/api";
 import type { Venda } from "@/lib/types";
 import { Produto, ItemVenda, FormaPagamento } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -24,63 +23,91 @@ import {
 import { toast } from "sonner";
 import { Search, ShoppingCart, Plus, Minus, Trash2, Check, CreditCard, Wallet, Banknote, QrCode } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Venda() {
+  const { user } = useAuth();
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carrinhoItens, setCarrinhoItens] = useState<ItemVenda[]>([]);
   const [filtro, setFiltro] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cliente, setCliente] = useState("");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">("");
+  const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
     carregarProdutos();
   }, []);
 
-  const carregarProdutos = () => {
-    const produtosCarregados = ProdutoService.getAll();
-    setProdutos(produtosCarregados);
+  const carregarProdutos = async () => {
+    try {
+      setIsLoading(true);
+      const produtosCarregados = await ProdutoService.getProdutos();
+      setProdutos(produtosCarregados);
+    } catch (error) {
+      console.error("Erro ao carregar produtos:", error);
+      toast.error("Erro ao carregar produtos");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const adicionarAoCarrinho = (produto: Produto) => {
-    const itemExistente = carrinhoItens.find(item => item.produto.id === produto.id);
-    
-    if (itemExistente) {
-      const novosItens = carrinhoItens.map(item => 
-        item.produto.id === produto.id
-          ? { ...item, quantidade: item.quantidade + 1 }
-          : item
-      );
-      setCarrinhoItens(novosItens);
-    } else {
-      setCarrinhoItens([...carrinhoItens, { produto, quantidade: 1 }]);
-    }
-    
-    toast.success(`${produto.nome} adicionado ao carrinho`);
-  };
+    const itemExistente = carrinhoItens.find(item => item.produtoId === produto.id);
 
-  const alterarQuantidade = (produtoId: string, novaQuantidade: number) => {
-    if (novaQuantidade <= 0) {
-      removerDoCarrinho(produtoId);
-      return;
+    if (itemExistente) {
+      if (itemExistente.quantidade >= produto.quantidade) {
+        alert('Quantidade indisponível em estoque');
+        return;
+      }
+      setCarrinhoItens(
+        carrinhoItens.map(item =>
+          item.produtoId === produto.id
+            ? { ...item, quantidade: item.quantidade + 1 }
+            : item
+        )
+      );
+    } else {
+      setCarrinhoItens([
+        ...carrinhoItens,
+        {
+          produtoId: produto.id,
+          quantidade: 1,
+          precoUnitario: produto.preco,
+          produto: produto
+        }
+      ]);
     }
-    
-    const novosItens = carrinhoItens.map(item => 
-      item.produto.id === produtoId
-        ? { ...item, quantidade: novaQuantidade }
-        : item
-    );
-    
-    setCarrinhoItens(novosItens);
   };
 
   const removerDoCarrinho = (produtoId: string) => {
-    setCarrinhoItens(carrinhoItens.filter(item => item.produto.id !== produtoId));
+    setCarrinhoItens(carrinhoItens.filter(item => item.produtoId !== produtoId));
+  };
+
+  const alterarQuantidade = (produtoId: string, novaQuantidade: number) => {
+    if (novaQuantidade < 1) {
+      removerDoCarrinho(produtoId);
+      return;
+    }
+
+    const produto = produtos.find(p => p.id === produtoId);
+    if (novaQuantidade > (produto?.quantidade || 0)) {
+      alert('Quantidade indisponível em estoque');
+      return;
+    }
+
+    setCarrinhoItens(
+      carrinhoItens.map(item =>
+        item.produtoId === produtoId
+          ? { ...item, quantidade: novaQuantidade }
+          : item
+      )
+    );
   };
 
   const calcularTotal = () => {
     return carrinhoItens.reduce(
-      (total, item) => total + item.produto.preco * item.quantidade,
+      (total, item) => total + item.precoUnitario * item.quantidade,
       0
     );
   };
@@ -98,7 +125,7 @@ export default function Venda() {
     setDialogOpen(true);
   };
 
-  const confirmarVenda = () => {
+  const confirmarVenda = async () => {
     if (!cliente) {
       toast.error("Informe o nome do cliente");
       return;
@@ -109,30 +136,45 @@ export default function Venda() {
       return;
     }
     
-    const dataVenda = new Date();
-    
-    const venda: Venda = {
-      id: generateId(),
-      data: dataVenda.toISOString(),
-      itens: [...carrinhoItens],
-      cliente,
-      formaPagamento: formaPagamento as FormaPagamento,
-      total: calcularTotal()
-    };
-    
-    // Salvar venda
-    VendaService.save(venda);
-    
-    // Adicionar entrada no trace
-    TraceService.addTraceEntry(venda);
-    
-    toast.success("Venda realizada com sucesso!");
-    
-    // Limpar dados
-    setDialogOpen(false);
-    setCarrinhoItens([]);
-    setCliente("");
-    setFormaPagamento("");
+    try {
+      setIsLoading(true);
+      const dataVenda = new Date();
+      const dataFormatada = dataVenda.toISOString().split('T')[0]; // Pega apenas YYYY-MM-DD
+      
+      const venda: Omit<Venda, 'id'> = {
+        data: dataFormatada,
+        itens: carrinhoItens.map(item => ({
+          produtoId: item.produtoId,
+          quantidade: item.quantidade,
+          precoUnitario: item.precoUnitario
+        })),
+        cliente,
+        formaPagamento: formaPagamento as FormaPagamento,
+        total: calcularTotal(),
+        status: 'ativa',
+        usuarioId: user?.id || '',
+        usuarioNome: user?.email || '',
+        periodoId: '' // Será preenchido pelo backend
+      };
+      
+      await VendaService.createVenda(venda);
+      
+      toast.success("Venda realizada com sucesso!");
+      
+      // Limpar dados
+      setDialogOpen(false);
+      setCarrinhoItens([]);
+      setCliente("");
+      setFormaPagamento("");
+      
+      // Recarregar produtos para atualizar estoque
+      await carregarProdutos();
+    } catch (error) {
+      console.error("Erro ao finalizar venda:", error);
+      toast.error("Erro ao finalizar venda. Verifique o estoque dos produtos.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const produtosFiltrados = produtos.filter(p => 
@@ -165,7 +207,11 @@ export default function Venda() {
             </div>
           </div>
           
-          {produtosFiltrados.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center p-8 bg-zinc-800 rounded-lg border border-zinc-700">
+              <p className="text-gray-400">Carregando produtos...</p>
+            </div>
+          ) : produtosFiltrados.length === 0 ? (
             <div className="text-center p-8 bg-zinc-800 rounded-lg border border-zinc-700">
               <p className="text-gray-400">
                 {produtos.length === 0 
@@ -178,9 +224,9 @@ export default function Venda() {
               {produtosFiltrados.map(produto => (
                 <Card key={produto.id} className="bg-zinc-800 border-zinc-700 overflow-hidden transition-all hover:shadow-lg hover:shadow-viber-gold/20">
                   <div className="aspect-video w-full overflow-hidden">
-                    {produto.imagem ? (
+                    {produto.imagemUrl ? (
                       <img 
-                        src={produto.imagem} 
+                        src={`${API_IMG}${produto.imagemUrl}`} 
                         alt={produto.nome}
                         className="w-full h-full object-cover"
                       />
@@ -194,17 +240,23 @@ export default function Venda() {
                     <CardTitle className="text-white">{produto.nome}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-viber-gold text-xl font-semibold">
-                      R$ {produto.preco.toFixed(2).replace('.', ',')}
-                    </p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-viber-gold text-xl font-semibold">
+                        R$ {produto.preco.toFixed(2).replace('.', ',')}
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        Estoque: {produto.quantidade}
+                      </p>
+                    </div>
                   </CardContent>
                   <CardFooter>
                     <Button 
                       className="w-full bg-viber-gold hover:bg-viber-gold/80 text-black"
                       onClick={() => adicionarAoCarrinho(produto)}
+                      disabled={produto.quantidade <= 0}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
-                      Adicionar
+                      {produto.quantidade <= 0 ? "Sem estoque" : "Adicionar"}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -232,7 +284,7 @@ export default function Venda() {
                   <AnimatePresence>
                     {carrinhoItens.map(item => (
                       <motion.div
-                        key={item.produto.id}
+                        key={item.produtoId}
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
@@ -241,53 +293,49 @@ export default function Venda() {
                       >
                         <div className="flex items-center gap-3">
                           <div className="h-12 w-12 rounded overflow-hidden">
-                            {item.produto.imagem ? (
+                            {item.produto?.imagemUrl ? (
                               <img 
-                                src={item.produto.imagem} 
+                                src={`${API_IMG}${item.produto.imagemUrl}`} 
                                 alt={item.produto.nome}
                                 className="h-full w-full object-cover"
                               />
                             ) : (
                               <div className="h-full w-full bg-zinc-700 flex items-center justify-center">
-                                <span className="text-xs text-gray-400">Sem img</span>
+                                <span className="text-gray-400 text-xs">Sem imagem</span>
                               </div>
                             )}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-white">{item.produto.nome}</p>
-                            <p className="text-xs text-viber-gold">
-                              R$ {item.produto.preco.toFixed(2).replace('.', ',')} un
+                            <p className="text-white font-medium">{item.produto?.nome}</p>
+                            <p className="text-viber-gold">
+                              R$ {(item.precoUnitario * item.quantidade).toFixed(2).replace('.', ',')}
                             </p>
                           </div>
                         </div>
-                        
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center bg-zinc-700 rounded-md">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7 rounded-r-none text-white hover:text-viber-gold hover:bg-transparent"
-                              onClick={() => alterarQuantidade(item.produto.id, item.quantidade - 1)}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="w-8 text-center text-sm text-white">
-                              {item.quantidade}
-                            </span>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7 rounded-l-none text-white hover:text-viber-gold hover:bg-transparent"
-                              onClick={() => alterarQuantidade(item.produto.id, item.quantidade + 1)}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
                           <Button
+                            variant="outline"
                             size="icon"
+                            className="h-8 w-8 border-zinc-600"
+                            onClick={() => alterarQuantidade(item.produtoId, item.quantidade - 1)}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="w-8 text-center text-white">{item.quantidade}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 border-zinc-600"
+                            onClick={() => alterarQuantidade(item.produtoId, item.quantidade + 1)}
+                            disabled={item.quantidade >= (item.produto?.quantidade || 0)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                          <Button
                             variant="ghost"
-                            className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-transparent"
-                            onClick={() => removerDoCarrinho(item.produto.id)}
+                            size="icon"
+                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                            onClick={() => removerDoCarrinho(item.produtoId)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -296,31 +344,29 @@ export default function Venda() {
                     ))}
                   </AnimatePresence>
                   
-                  <div className="pt-4">
-                    <div className="flex justify-between text-lg font-semibold">
-                      <span className="text-gray-300">Total:</span>
-                      <span className="text-viber-gold">
+                  <div className="pt-4 border-t border-zinc-700">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-gray-400">Total:</span>
+                      <span className="text-viber-gold text-xl font-semibold">
                         R$ {calcularTotal().toFixed(2).replace('.', ',')}
                       </span>
                     </div>
-                  </div>
-                  
-                  <div className="flex gap-2 pt-4">
-                    <Button
-                      variant="outline"
-                      className="flex-1 border-zinc-600 text-gray-200 hover:bg-zinc-700"
-                      onClick={limparCarrinho}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Limpar
-                    </Button>
-                    <Button 
-                      className="flex-1 bg-viber-gold hover:bg-viber-gold/80 text-black"
-                      onClick={finalizarVenda}
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      Finalizar
-                    </Button>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 border-zinc-600 text-gray-200 hover:bg-zinc-700 text-black"
+                        onClick={limparCarrinho}
+                      >
+                        Limpar
+                      </Button>
+                      <Button
+                        className="flex-1 bg-viber-gold hover:bg-viber-gold/80 text-black"
+                        onClick={finalizarVenda}
+                      >
+                        Finalizar Venda
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -340,29 +386,29 @@ export default function Venda() {
               <Label htmlFor="cliente" className="text-gray-200">Nome do Cliente</Label>
               <Input
                 id="cliente"
-                placeholder="Informe o nome do cliente"
                 value={cliente}
                 onChange={(e) => setCliente(e.target.value)}
                 className="bg-zinc-700 border-zinc-600 text-white"
+                placeholder="Digite o nome do cliente"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="pagamento" className="text-gray-200">Forma de Pagamento</Label>
-              <Select value={formaPagamento} onValueChange={(value: string) => setFormaPagamento(value as FormaPagamento | "")}>
+              <Label htmlFor="formaPagamento" className="text-gray-200">Forma de Pagamento</Label>
+              <Select value={formaPagamento} onValueChange={(value) => setFormaPagamento(value as FormaPagamento)}>
                 <SelectTrigger className="bg-zinc-700 border-zinc-600 text-white">
-                  <SelectValue placeholder="Selecione uma forma de pagamento" />
+                  <SelectValue placeholder="Selecione a forma de pagamento" />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                <SelectContent className="bg-zinc-800 border-zinc-700">
                   {metodosPagamento.map(metodo => (
                     <SelectItem 
                       key={metodo.valor} 
                       value={metodo.valor}
-                      className="focus:bg-zinc-700 focus:text-white"
+                      className="text-white hover:bg-zinc-700"
                     >
                       <div className="flex items-center gap-2">
                         <metodo.icone className="h-4 w-4" />
-                        <span>{metodo.label}</span>
+                        {metodo.label}
                       </div>
                     </SelectItem>
                   ))}
@@ -370,25 +416,12 @@ export default function Venda() {
               </Select>
             </div>
             
-            <div className="border-t border-zinc-700 mt-4 pt-4">
-              <h3 className="text-lg font-semibold mb-3">Resumo do Pedido</h3>
-              <div className="space-y-2">
-                {carrinhoItens.map(item => (
-                  <div key={item.produto.id} className="flex justify-between text-sm">
-                    <span>
-                      {item.produto.nome} x{item.quantidade}
-                    </span>
-                    <span className="text-gray-300">
-                      R$ {(item.produto.preco * item.quantidade).toFixed(2).replace('.', ',')}
-                    </span>
-                  </div>
-                ))}
-                <div className="flex justify-between font-bold text-lg pt-2 border-t border-zinc-700">
-                  <span>Total:</span>
-                  <span className="text-viber-gold">
-                    R$ {calcularTotal().toFixed(2).replace('.', ',')}
-                  </span>
-                </div>
+            <div className="pt-4 border-t border-zinc-700">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-gray-400">Total da Venda:</span>
+                <span className="text-viber-gold text-xl font-semibold">
+                  R$ {calcularTotal().toFixed(2).replace('.', ',')}
+                </span>
               </div>
             </div>
           </div>
@@ -397,15 +430,16 @@ export default function Venda() {
             <Button 
               variant="outline" 
               onClick={() => setDialogOpen(false)}
-              className="border-zinc-600 text-gray-200 hover:bg-zinc-700"
+              className="border-zinc-600 text-gray-200 hover:bg-zinc-700 text-black"
             >
               Cancelar
             </Button>
             <Button 
               onClick={confirmarVenda}
               className="bg-viber-gold hover:bg-viber-gold/80 text-black"
+              disabled={isLoading}
             >
-              Confirmar Venda
+              {isLoading ? "Processando..." : "Confirmar Venda"}
             </Button>
           </DialogFooter>
         </DialogContent>

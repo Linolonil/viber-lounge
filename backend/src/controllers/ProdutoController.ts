@@ -37,58 +37,113 @@ export class ProdutoController {
   }
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
-
-    
     try {
-      let image_filename = `${req.file?.filename}`;
-      const { nome, quantidade, preco } = req.body;
-      console.log(req.file);
-      
       if (!req.file) {
         throw new AppError(400, 'Imagem do produto é obrigatória');
       }
 
-      // Processa a imagem
+      const { nome, quantidade, preco } = req.body;
+      
+      if (!nome || !quantidade || !preco) {
+        throw new AppError(400, 'Todos os campos são obrigatórios');
+      }
 
-      // Cria o produto
+      const precoNumerico = parseFloat(preco);
+      const quantidadeNumerica = parseInt(quantidade);
+
+      if (isNaN(precoNumerico) || precoNumerico <= 0) {
+        throw new AppError(400, 'Preço inválido');
+      }
+
+      if (isNaN(quantidadeNumerica) || quantidadeNumerica < 0) {
+        throw new AppError(400, 'Quantidade inválida');
+      }
+
+      // Processar a imagem
+      const { filename, url } = await ImageService.processImage(req.file);
+
       const produto: Produto = await this.produtoService.create({
         nome,
-        preco: parseFloat(preco),
-        imagemUrl: image_filename,
-        quantidade
+        preco: precoNumerico,
+        imagemUrl: url,
+        quantidade: quantidadeNumerica
       });
 
       res.status(201).json(produto);
     } catch (error) {
-      next(error);
+      if (error instanceof AppError) {
+        res.status(error.statusCode).json({ error: error.message });
+      } else {
+        next(error);
+      }
     }
   }
 
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const { nome, descricao, preco } = req.body;
-      
-      const updateData: any = { nome, descricao, preco: parseFloat(preco) };
+      const { nome, preco, quantidade } = req.body;
 
-      // Se uma nova imagem foi enviada
-      if (req.file) {
-        // Busca o produto atual para deletar a imagem antiga
-        const produtoAtual = await this.produtoService.getById(id);
-        if (produtoAtual) {
-          const filename = produtoAtual.imagemUrl.split('/').pop() || '';
-          await ImageService.deleteImage(filename);
-        }
-
-        // Processa a nova imagem
-        const { url } = await ImageService.processImage(req.file);
-        updateData.imagemUrl = url;
+      // Validar quantidade
+      const quantidadeNumerica = parseInt(quantidade);
+      if (isNaN(quantidadeNumerica) || quantidadeNumerica < 0) {
+        throw new AppError(400, 'Quantidade inválida');
       }
 
+      // Validar preço
+      const precoNumerico = parseFloat(preco);
+      if (isNaN(precoNumerico) || precoNumerico <= 0) {
+        throw new AppError(400, 'Preço inválido');
+      }
+
+      // Validar nome
+      if (!nome || typeof nome !== 'string' || nome.trim() === '') {
+        throw new AppError(400, 'Nome inválido');
+      }
+
+      // Buscar produto atual
+      const produtoAtual = await this.produtoService.getById(id);
+      if (!produtoAtual) {
+        res.status(404).json({ error: 'Produto não encontrado' });
+        return;
+      }
+
+      // Preparar dados para atualização
+      const updateData: any = { 
+        nome: nome.trim(),
+        preco: precoNumerico, 
+        quantidade: quantidadeNumerica 
+      };
+
+      // Se houver nova imagem
+      if (req.file) {
+        // Excluir imagem antiga
+        const filename = produtoAtual.imagemUrl.split('/').pop();
+        if (filename) {
+          try {
+            await ImageService.deleteImage(filename);
+          } catch (error) {
+            console.error('Erro ao deletar imagem antiga:', error);
+          }
+        }
+
+        // Processar nova imagem
+        const { url } = await ImageService.processImage(req.file);
+        updateData.imagemUrl = url;
+      } else {
+        // Manter a imagem atual
+        updateData.imagemUrl = produtoAtual.imagemUrl;
+      }
+
+      // Atualizar produto
       const produto = await this.produtoService.update(id, updateData);
       res.json(produto);
     } catch (error) {
-      next(error);
+      if (error instanceof AppError) {
+        res.status(error.statusCode).json({ error: error.message });
+      } else {
+        next(error);
+      }
     }
   }
 
@@ -102,9 +157,10 @@ export class ProdutoController {
         return;
       }
 
-      res.status(204).json({ message: 'Produto deletado com sucesso' }) ;
+      res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: 'Erro ao deletar produto' });
     }
   }
 } 
+ 

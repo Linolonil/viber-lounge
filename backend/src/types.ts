@@ -1,3 +1,5 @@
+import { Venda, ItemVenda } from './types/Venda';
+
 export interface Produto {
   id: string;
   nome: string;
@@ -6,23 +8,10 @@ export interface Produto {
   quantidade: number; // Quantidade em estoque
 }
 
-export interface ItemVenda {
-  produto: Produto;
-  quantidade: number;
-}
-
 export type FormaPagamento = "pix" | "credito" | "debito" | "dinheiro";
 export type StatusVenda = "ativa" | "cancelada";
 
-export interface Venda {
-  id: string;
-  data: string; // ISO string
-  itens: ItemVenda[];
-  cliente: string;
-  formaPagamento: FormaPagamento;
-  total: number;
-  status: StatusVenda;
-}
+export type { Venda, ItemVenda };
 
 export interface DadosGrafico {
   pix: number;

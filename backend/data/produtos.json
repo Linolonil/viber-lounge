@@ -1,3 +1,113 @@
 [
-  
+  {
+    "nome": "Caipirinhas",
+    "preco": 180,
+    "quantidade": 50,
+    "id": "cprn12345xyz"
+  },
+  {
+    "nome": "Mojito",
+    "preco": 22,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 40,
+    "id": "mjt67890abc"
+  },
+  {
+    "nome": "Margarita",
+    "preco": 25,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 35,
+    "id": "mgr54321def"
+  },
+  {
+    "nome": "Negroni",
+    "preco": 28,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 30,
+    "id": "ngr98765ghi"
+  },
+  {
+    "nome": "Piña Colada",
+    "preco": 20,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 45,
+    "id": "pnc13579jkl"
+  },
+  {
+    "nome": "Gin Tônica",
+    "preco": 23,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 55,
+    "id": "gtn24680mno"
+  },
+  {
+    "nome": "Sex on the Beach",
+    "preco": 19,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 38,
+    "id": "sxb11223pqr"
+  },
+  {
+    "nome": "Whisky Sour",
+    "preco": 26,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 32,
+    "id": "wks33445stu"
+  },
+  {
+    "nome": "Martini",
+    "preco": 30,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 25,
+    "id": "mrt55667vwx"
+  },
+  {
+    "nome": "Cosmopolitan",
+    "preco": 24,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 42,
+    "id": "csp77889yza"
+  },
+  {
+    "nome": "Bloody Mary",
+    "preco": 21,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 36,
+    "id": "blm99001bcd"
+  },
+  {
+    "nome": "Moscow Mule",
+    "preco": 22,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 48,
+    "id": "msm22334efg"
+  },
+  {
+    "nome": "Aperol Spritz",
+    "preco": 20,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 52,
+    "id": "aps44556hij"
+  },
+  {
+    "nome": "Old Fashioned",
+    "preco": 27,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 28,
+    "id": "olf66778klm"
+  },
+  {
+    "nome": "Daiquiri",
+    "preco": 19,
+    "imagemUrl": "defaultBebida.png",
+    "quantidade": 44,
+    "id": "dqr88990nop"
+  },
+  {
+    "nome": "123",
+    "preco": 123,
+    "imagemUrl": "/api/images/produtos/prod-1745614409451.png",
+    "quantidade": 2,
+    "id": "m9x9qynxf3y28xpbvj"
+  }
 ]

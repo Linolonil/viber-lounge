@@ -1,4 +1,4 @@
-import { Venda } from '../types';
+import { Venda } from '../types/Venda';
 import { VendaRepository } from '../repositories/VendaRepository';
 import { generateId } from '../utils/idGenerator';
 
@@ -58,20 +58,9 @@ export class VendaService {
 
   async getByDate(date: string): Promise<Venda[]> {
     const vendas = await this.repository.findAll();
-    const startDay = new Date(date);
-    startDay.setHours(0, 0, 0, 0);
     
-    const endDay = new Date(date);
-    endDay.setHours(23, 59, 59, 999);
-
-    
-    let vendasFiltradas = vendas.filter(v => {
-      const vendaDate = new Date(v.data);
-      const resultado = vendaDate >= startDay && vendaDate <= endDay;
-      return resultado;
-    });
-
-    return vendasFiltradas;
+    // Filtrar vendas pela data exata
+    return vendas.filter(v => v.data === date);
   }
 
   async cancelSale(id: string): Promise<Venda | undefined> {

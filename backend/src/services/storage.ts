@@ -1,28 +1,29 @@
-import fs from 'fs';
-import path from 'path';
-import { Produto, Venda } from '../types';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
+import { Produto } from '../types';
+import { Venda } from '../types/Venda';
 
-const DATA_DIR = path.join(__dirname, '../../data');
-const PRODUTOS_FILE = path.join(DATA_DIR, 'produtos.json');
-const VENDAS_FILE = path.join(DATA_DIR, 'vendas.json');
+const DATA_DIR = join(__dirname, '../../data');
+const PRODUTOS_FILE = join(DATA_DIR, 'produtos.json');
+const VENDAS_FILE = join(DATA_DIR, 'vendas.json');
 
 // Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!existsSync(DATA_DIR)) {
+  mkdirSync(DATA_DIR, { recursive: true });
 }
 
 // Initialize files if they don't exist
-if (!fs.existsSync(PRODUTOS_FILE)) {
-  fs.writeFileSync(PRODUTOS_FILE, JSON.stringify([]));
+if (!existsSync(PRODUTOS_FILE)) {
+  writeFileSync(PRODUTOS_FILE, JSON.stringify([]));
 }
 
-if (!fs.existsSync(VENDAS_FILE)) {
-  fs.writeFileSync(VENDAS_FILE, JSON.stringify([]));
+if (!existsSync(VENDAS_FILE)) {
+  writeFileSync(VENDAS_FILE, JSON.stringify([]));
 }
 
 export const ProdutoService = {
   getAll: (): Produto[] => {
-    const data = fs.readFileSync(PRODUTOS_FILE, 'utf-8');
+    const data = readFileSync(PRODUTOS_FILE, 'utf-8');
     return JSON.parse(data);
   },
   
@@ -41,18 +42,18 @@ export const ProdutoService = {
       produtos.push(produto);
     }
     
-    fs.writeFileSync(PRODUTOS_FILE, JSON.stringify(produtos, null, 2));
+    writeFileSync(PRODUTOS_FILE, JSON.stringify(produtos, null, 2));
   },
   
   delete: (id: string): void => {
     const produtos = ProdutoService.getAll().filter(p => p.id !== id);
-    fs.writeFileSync(PRODUTOS_FILE, JSON.stringify(produtos, null, 2));
+    writeFileSync(PRODUTOS_FILE, JSON.stringify(produtos, null, 2));
   }
 };
 
 export const VendaService = {
   getAll: (): Venda[] => {
-    const data = fs.readFileSync(VENDAS_FILE, 'utf-8');
+    const data = readFileSync(VENDAS_FILE, 'utf-8');
     return JSON.parse(data);
   },
   
@@ -71,7 +72,7 @@ export const VendaService = {
       vendas.push(venda);
     }
     
-    fs.writeFileSync(VENDAS_FILE, JSON.stringify(vendas, null, 2));
+    writeFileSync(VENDAS_FILE, JSON.stringify(vendas, null, 2));
   },
   
   getByDate: (date: string): Venda[] => {

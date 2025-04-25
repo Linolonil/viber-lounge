@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { ProdutoService } from "@/services/storage";
 import { Produto } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Pencil, Trash2, Search, ImageIcon } from "lucide-react";
-import { api } from "@/services/api";
+import { api, API_IMG } from "@/services/api";
 
 export default function ListaProdutos() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -39,6 +38,8 @@ export default function ListaProdutos() {
       toast.error("Erro ao carregar produtos");
     }
   };
+  console.log(produtos);
+
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -57,8 +58,8 @@ export default function ListaProdutos() {
     setProdutoEditando(produto);
     setNome(produto.nome);
     setPreco(produto.preco.toString().replace(".", ","));
-    setImagem(produto.imagem);
-    setPreviewImage(produto.imagem);
+    setImagem(produto.imagemUrl);
+    setPreviewImage(produto.imagemUrl);
     setDialogOpen(true);
   };
 
@@ -81,7 +82,7 @@ export default function ListaProdutos() {
       id: produtoEditando.id,
       nome,
       preco: precoNumerico,
-      imagem: imagem || produtoEditando.imagem,
+      imagemUrl: imagem || produtoEditando.imagemUrl,
       quantidade: produtoEditando.quantidade
     };
     
@@ -139,11 +140,12 @@ export default function ListaProdutos() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {produtosFiltrados.map(produto => (
-            <Card key={produto.id} className="bg-zinc-800 border-zinc-700 overflow-hidden">
-              <div className="aspect-video w-full overflow-hidden">
-                {produto.imagem ? (
+            
+            <Card key={produto.id} className="bg-zinc-800 border-zinc-700 overflow-hidden flex flex-col">
+              <div className="relative aspect-video w-full overflow-hidden">
+                {produto.imagemUrl ? (
                   <img 
-                    src={produto.imagem} 
+                    src={`${API_IMG}${produto.imagemUrl}`}
                     alt={produto.nome}
                     className="w-full h-full object-cover"
                   />
@@ -153,19 +155,30 @@ export default function ListaProdutos() {
                   </div>
                 )}
               </div>
-              <CardHeader>
-                <CardTitle className="text-white">{produto.nome}</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-white text-lg">{produto.nome}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-viber-gold text-xl font-semibold">
-                  R$ {produto.preco.toFixed(2).replace('.', ',')}
-                </p>
+              <CardContent className="pb-2">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 text-sm">Preço:</span>
+                    <p className="text-viber-gold text-lg font-semibold">
+                      R$ {produto.preco.toFixed(2).replace('.', ',')}
+                    </p>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 text-sm">Quantidade:</span>
+                    <p className="text-white text-lg font-semibold">
+                      {produto.quantidade} unidades
+                    </p>
+                  </div>
+                </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
+              <CardFooter className="flex justify-end gap-2 pt-2">
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-zinc-600 text-gray-200 hover:bg-zinc-700"
+                  className="border-zinc-600 text-gray-200 hover:bg-zinc-700 hover:text-white text-black"
                   onClick={() => abrirDialogEdicao(produto)}
                 >
                   <Pencil className="h-4 w-4 mr-2" />
