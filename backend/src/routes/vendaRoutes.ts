@@ -7,17 +7,17 @@ const router = Router();
 const vendaController = new VendaController();
 
 // Todas as rotas de venda requerem autenticação
-router.use('/vendas', authMiddleware);
+router.use(authMiddleware);
 
-router.get('/vendas', vendaController.getAll.bind(vendaController));
-router.get('/vendas/:id', vendaController.getById.bind(vendaController));
-router.post('/vendas', validateVenda, vendaController.create.bind(vendaController));
-router.get('/vendas/data/:date', vendaController.getByDate.bind(vendaController));
-router.delete('/vendas/:id', vendaController.cancelSale.bind(vendaController));
-router.delete('/vendas/:id/itens/:itemId', vendaController.cancelItem.bind(vendaController));
+// Rotas de vendas
+router.get('/vendas', (req, res, next) => vendaController.getAll(req, res, next));
+router.get('/vendas/:id', (req, res, next) => vendaController.getById(req, res, next));
+router.post('/vendas', validateVenda, (req, res, next) => vendaController.create(req, res, next));
+router.get('/vendas/data/:date', (req, res, next) => vendaController.getByDate(req, res, next));
+router.delete('/vendas/:id', (req, res, next) => vendaController.cancelSale(req, res, next));
 
 // Endpoints de relatórios
-router.get('/dashboard/:date', vendaController.getDadosByDate.bind(vendaController));
-router.get('/trace/:date', vendaController.getTraceByDate.bind(vendaController));
+router.get('/dashboard/:date', (req, res, next) => vendaController.getDadosByDate(req, res, next));
+router.get('/trace/:date', (req, res, next) => vendaController.getTraceByDate(req, res, next));
 
 export default router; 

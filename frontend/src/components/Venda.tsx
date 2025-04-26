@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { VendaService } from '@/services/api';
+import { API_URL, VendaService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { PeriodoTrabalhoCard } from './PeriodoTrabalho';
@@ -14,7 +14,7 @@ export function Venda() {
     queryKey: ['periodo-trabalho', user?.id],
     queryFn: async () => {
       if (!user?.id) throw new Error('Usuário não autenticado');
-      const response = await fetch(`http://localhost:3001/api/periodo-trabalho/atual/${user.id}`, {
+      const response = await fetch(`${API_URL}/periodo-trabalho/atual/${user.id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -72,7 +72,6 @@ export function Venda() {
         </div>
       )}
 
-      {/* Resto do componente de venda */}
     </div>
   );
 } 

@@ -179,41 +179,52 @@ export class VendaController {
         return;
       }
 
-      const dataAtual = new Date();
-      const dataFormatada = dataAtual.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-
-      const venda: Omit<Venda, 'id'> = {
+      const vendaData: Omit<Venda, 'id' | 'createdAt'> = {
         ...req.body,
-        data: dataFormatada,
         usuarioId: user.id,
-        usuarioNome: user.email,
+        usuarioNome: user.nome || user.email,
         periodoId: periodoAtual.id,
-        status: 'ativa'
+        status: 'ativa',
+        terminalId: req.body.terminalId || '1'
       };
 
-      const vendas = this.getVendas();
-      const novaVenda: Venda = {
-        ...venda,
-        id: Math.random().toString(36).substr(2, 9)
-      };
-
-      vendas.push(novaVenda);
-      this.saveVendas(vendas);
+      // Usar o VendaService para criar a venda
+      const novaVenda = await this.vendaService.create(vendaData);
 
       // Atualiza o período de trabalho específico deste usuário
       this.atualizarPeriodoTrabalho(novaVenda);
 
       res.status(201).json(novaVenda);
     } catch (error) {
+      console.error('Erro detalhado:', error);
+      
       if (error instanceof Error) {
-        if (error.message.includes('Data inválida') || 
-            error.message.includes('Quantidade inválida') || 
-            error.message.includes('Estoque insuficiente') ||
-            error.message.includes('Total informado')) {
+        // Erros de validação de estoque
+        if (error.message.includes('Quantidade solicitada') || 
+            error.message.includes('excede o estoque disponível')) {
           next(new AppError(400, error.message));
           return;
         }
+        // Erros de validação de produto
+        if (error.message.includes('Produto não encontrado')) {
+          next(new AppError(400, error.message));
+          return;
+        }
+        // Erros de validação de quantidade
+        if (error.message.includes('Quantidade inválida')) {
+          next(new AppError(400, error.message));
+          return;
+        }
+        // Erros de validação de total
+        if (error.message.includes('Total informado')) {
+          next(new AppError(400, error.message));
+          return;
+        }
+        // Se for outro erro, retorna a mensagem específica
+        next(new AppError(500, `Erro ao criar venda: ${error.message}`));
+        return;
       }
+      
       next(new AppError(500, 'Erro ao criar venda'));
     }
   }
@@ -271,53 +282,54 @@ export class VendaController {
 
   async getTraceByDate(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const { date } = req.params;
+      const { date } = req.params;
 
-        // Validação da data
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            throw new AppError(400, 'Formato de data inválido. Use YYYY-MM-DD');
-        }
+      // Validação da data
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        throw new AppError(400, 'Formato de data inválido. Use YYYY-MM-DD');
+      }
 
-        // Buscar vendas para a data especificada
-        const vendas = await this.vendaService.getByDate(date);
+      // Buscar vendas para a data especificada
+      const vendas = await this.vendaService.getByDate(date);
 
-        // Gerar log detalhado
-        const traceContent = vendas
-            .filter(venda => venda.status !== 'cancelada') // Ignorar vendas canceladas
-            .map(venda => {
-                const header = `Venda ID: ${venda.id} | Data: ${new Date(venda.data).toLocaleString()} | Cliente: ${venda.cliente || 'Não informado'}`;
-                const payment = `Pagamento: ${venda.formaPagamento.toUpperCase()} | Total: R$ ${venda.total.toFixed(2)}`;
-                
-                const items = venda.itens.map(item => 
-                    `- ${item.quantidade}x ${item.produto.nome} (${item.produto.id}) = R$ ${(item.produto.preco * item.quantidade).toFixed(2)}`
-                ).join('\n');
+      // Gerar log detalhado
+      const traceContent = vendas
+        .filter(venda => venda.status !== 'cancelada')
+        .map(venda => {
+          const vendaDate = new Date(venda.createdAt);
+          const header = `Venda ID: ${venda.id} | Data: ${vendaDate.toLocaleString()} | Cliente: ${venda.cliente || 'Não informado'}`;
+          const payment = `Pagamento: ${venda.formaPagamento.toUpperCase()} | Total: R$ ${venda.total.toFixed(2)}`;
+          
+          const items = venda.itens.map(item => 
+            `- ${item.quantidade}x ${item.produtoNome} (${item.produtoId}) = R$ ${item.subtotal.toFixed(2)}`
+          ).join('\n');
 
-                const status = `Status: ${venda.status.toUpperCase()}`;
-                const separator = '-'.repeat(60);
+          const status = `Status: ${venda.status.toUpperCase()}`;
+          const separator = '-'.repeat(60);
 
-                return `${header}\n${payment}\nItens:\n${items}\n${status}\n${separator}`;
-            })
-            .join('\n\n');
+          return `${header}\n${payment}\nItens:\n${items}\n${status}\n${separator}`;
+        })
+        .join('\n\n');
 
-        // Se não houver vendas
-        if (!traceContent) {
-            res.type('text').send(`Nenhuma venda encontrada para a data ${date}`);
-            return;
-        }
+      // Se não houver vendas
+      if (!traceContent) {
+        res.type('text').send(`Nenhuma venda encontrada para a data ${date}`);
+        return;
+      }
 
-        // Adicionar cabeçalho com data e total de vendas
-        const totalVendas = vendas
-            .filter(v => v.status !== 'cancelada')
-            .reduce((sum, v) => sum + v.total, 0);
-            
-        const header = `RELATÓRIO DE VENDAS - ${date}\nTotal de vendas: R$ ${totalVendas.toFixed(2)}\nTotal de pedidos: ${vendas.filter(v => v.status !== 'cancelada').length}\n${'-'.repeat(60)}\n\n`;
+      // Adicionar cabeçalho com data e total de vendas
+      const totalVendas = vendas
+        .filter(v => v.status !== 'cancelada')
+        .reduce((sum, v) => sum + v.total, 0);
         
-        res.type('text').send(header + traceContent);
+      const header = `RELATÓRIO DE VENDAS - ${date}\nTotal de vendas: R$ ${totalVendas.toFixed(2)}\nTotal de pedidos: ${vendas.filter(v => v.status !== 'cancelada').length}\n${'-'.repeat(60)}\n\n`;
+      
+      res.type('text').send(header + traceContent);
     } catch (error) {
-        console.error('Erro ao gerar trace de vendas:', error);
-        next(new AppError(500, 'Erro ao gerar relatório de vendas'));
+      console.error('Erro ao gerar trace de vendas:', error);
+      next(new AppError(500, 'Erro ao gerar relatório de vendas'));
     }
-}
+  }
 
   async getDadosByDate(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -361,16 +373,15 @@ export class VendaController {
             break;
         }
 
-        venda.itens?.forEach(item => {
-          const produto = item.produto;
-          const produtoNoMapa = produtosMap.get(produto.id);
+        venda.itens.forEach(item => {
+          const produtoNoMapa = produtosMap.get(item.produtoId);
 
           if (produtoNoMapa) {
             produtoNoMapa.quantidade += item.quantidade;
           } else {
-            produtosMap.set(produto.id, {
-              id: produto.id,
-              nome: produto.nome,
+            produtosMap.set(item.produtoId, {
+              id: item.produtoId,
+              nome: item.produtoNome,
               quantidade: item.quantidade
             });
           }
@@ -388,10 +399,28 @@ export class VendaController {
 
   // cancelar venda
 
-  async cancelSale(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async cancelSale(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      const user = req.user;
+      if (!user) {
+        next(new AppError(401, 'Usuário não autenticado'));
+        return;
+      }
+
       const { id } = req.params;
-      const venda = await this.vendaService.cancelSale(id);
+      const { motivo } = req.body;
+
+      if (!motivo) {
+        next(new AppError(400, 'Motivo do cancelamento é obrigatório'));
+        return;
+      }
+
+      const venda = await this.vendaService.cancelSale(
+        id,
+        user.id,
+        user.nome || user.email,
+        motivo
+      );
       
       if (!venda) {
         next(new AppError(404, 'Venda não encontrada'));
@@ -401,40 +430,6 @@ export class VendaController {
       res.json({ message: 'Venda cancelada com sucesso', venda });
     } catch (error) {
       next(new AppError(500, 'Erro ao cancelar venda'));
-    }
-  }
-
-  async cancelItem(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { id, itemId } = req.params;
-      const { quantidade } = req.body;
-
-      if (!quantidade || typeof quantidade !== 'number' || quantidade <= 0) {
-        next(new AppError(400, 'Quantidade deve ser um número positivo'));
-        return;
-      }
-
-      const venda = await this.vendaService.cancelItem(id, itemId, quantidade);
-      
-      if (!venda) {
-        next(new AppError(404, 'Venda ou item não encontrado'));
-        return;
-      }
-
-      const produto = venda.itens.find(item => item.produto.id === itemId)?.produto;
-      const valorCancelado = produto ? quantidade * produto.preco : 0;
-
-      res.json({ 
-        message: 'Item cancelado com sucesso', 
-        venda,
-        valorCancelado
-      });
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Quantidade inválida para cancelamento') {
-        next(new AppError(400, error.message));
-        return;
-      }
-      next(new AppError(500, 'Erro ao cancelar item'));
     }
   }
 }

@@ -1,130 +1,345 @@
-# Backend do Sistema de Vendas
+# Viber Lounge - Backend
 
-Este é o backend do sistema de vendas, desenvolvido em TypeScript com Express.js.
+Backend da aplicação Viber Lounge, desenvolvido com Node.js, TypeScript e Express.
 
-## Estrutura do Projeto
+## 🚀 Tecnologias
+
+- Node.js
+- TypeScript
+- Express
+- SQLite
+- Multer (Upload de arquivos)
+- Sharp (Processamento de imagens)
+
+## 📁 Estrutura do Projeto
 
 ```
 backend/
 ├── src/
 │   ├── controllers/     # Controladores da aplicação
-│   ├── middlewares/     # Middlewares (validação, tratamento de erros)
-│   ├── repositories/    # Repositórios para acesso aos dados
-│   ├── routes/         # Definição das rotas
-│   ├── services/       # Lógica de negócio
-│   ├── types.ts        # Definição de tipos
+│   ├── core/           # Lógica de negócio central
+│   ├── infrastructure/ # Configurações de infraestrutura
+│   ├── middlewares/    # Middlewares da aplicação
+│   ├── presentation/   # Camada de apresentação
+│   ├── repositories/   # Repositórios de dados
+│   ├── routes/         # Rotas da API
+│   ├── services/       # Serviços da aplicação
+│   ├── types/          # Definições de tipos
 │   ├── utils/          # Utilitários
-│   └── index.ts        # Ponto de entrada da aplicação
-├── data/               # Armazenamento de dados (JSON)
-└── package.json        # Dependências e scripts
+│   └── index.ts        # Ponto de entrada
+├── data/               # Banco de dados SQLite
+├── uploads/           # Armazenamento de imagens
+└── package.json       # Dependências e scripts
 ```
 
-## Funcionalidades
-
-### Vendas
-
-#### Criar Venda
-```http
-POST /api/vendas
-```
-Body:
-```json
-{
-  "data": "2024-03-20T10:00:00.000Z",
-  "itens": [
-    {
-      "produto": {
-        "id": "produto1",
-        "nome": "Produto 1",
-        "preco": 50.50,
-        "imagem": "url_ou_base64",
-        "quantidade": 10
-      },
-      "quantidade": 2
-    }
-  ],
-  "cliente": "Nome do Cliente",
-  "formaPagamento": "pix",
-  "total": 101.00
-}
-```
-
-#### Listar Todas as Vendas
-```http
-GET /api/vendas
-```
-
-#### Buscar Venda por ID
-```http
-GET /api/vendas/:id
-```
-
-#### Buscar Vendas por Data
-```http
-GET /api/vendas/data/:date
-```
-Exemplo: `/api/vendas/data/2024-03-20`
-
-#### Cancelar Venda
-```http
-DELETE /api/vendas/:id
-```
-
-#### Cancelar Item da Venda
-```http
-DELETE /api/vendas/:id/itens/:itemId
-```
-Body:
-```json
-{
-  "quantidade": 2
-}
-```
-
-### Validações
-
-- **Criação de Venda**:
-  - Data é obrigatória e deve ser válida
-  - Pelo menos um item é obrigatório
-  - Cliente é obrigatório
-  - Forma de pagamento é obrigatória
-  - Estoque deve ser suficiente
-  - Total deve corresponder à soma dos itens
-
-- **Cancelamento de Item**:
-  - Quantidade deve ser maior que 0
-  - Quantidade não pode ser maior que a quantidade atual
-  - Item deve existir na venda
-
-### Gestão de Estoque
-
-- Estoque é atualizado automaticamente:
-  - Diminui ao criar venda
-  - Aumenta ao cancelar venda
-  - Aumenta ao cancelar item
-
-### Status da Venda
-
-- **ativa**: Venda criada normalmente
-- **cancelada**: Venda cancelada (totalmente ou sem itens)
-
-## Instalação
+## 🔧 Configuração
 
 1. Instale as dependências:
 ```bash
 npm install
 ```
 
-2. Inicie o servidor:
+2. Configure as variáveis de ambiente:
 ```bash
-npm start
+cp .env.example .env
 ```
 
-O servidor estará disponível em `http://localhost:3000`.
+3. Inicie o servidor:
+```bash
+npm run dev
+```
 
-## Tecnologias Utilizadas
+## 📝 Funcionalidades Principais
 
-- TypeScript
-- Express.js
-- Node.js
-- JSON (armazenamento de dados) 
+### Produtos
+- CRUD completo de produtos
+- Upload e processamento de imagens
+- Validação de dados
+- Tratamento de erros
+
+### Vendas
+- Registro de vendas
+- Histórico de vendas
+- Relatórios por período
+
+### Período de Trabalho
+- Controle de períodos de trabalho
+- Início e encerramento de períodos
+- Relatórios de vendas por período
+
+## 🔒 Segurança
+
+- Autenticação JWT
+- Validação de dados
+- Sanitização de inputs
+- Tratamento de erros
+- Proteção contra uploads maliciosos
+
+## 🛠️ Desenvolvimento
+
+### Scripts Disponíveis
+
+- `npm run dev`: Inicia o servidor em modo desenvolvimento
+- `npm run build`: Compila o projeto
+- `npm start`: Inicia o servidor em produção
+- `npm run lint`: Executa o linter
+- `npm run test`: Executa os testes
+
+### Convenções
+
+- TypeScript para tipagem estática
+- Arquitetura limpa e modular
+- Padrão Repository para acesso a dados
+- Serviços para lógica de negócio
+- Controllers para manipulação de requisições
+
+## 📦 Deploy
+
+O projeto pode ser containerizado usando Docker:
+
+```bash
+docker-compose up -d
+```
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT.
+
+## 📡 Endpoints da API
+
+### Produtos
+
+#### Listar Produtos
+```http
+GET /api/produtos
+```
+**Resposta:**
+```json
+[
+  {
+    "id": "string",
+    "nome": "string",
+    "preco": number,
+    "quantidade": number,
+    "imagemUrl": "string"
+  }
+]
+```
+
+#### Buscar Produto por ID
+```http
+GET /api/produtos/:id
+```
+**Resposta:**
+```json
+{
+  "id": "string",
+  "nome": "string",
+  "preco": number,
+  "quantidade": number,
+  "imagemUrl": "string"
+}
+```
+
+#### Criar Produto
+```http
+POST /api/produtos
+```
+**Body (FormData):**
+- `nome`: string (obrigatório)
+- `preco`: number (obrigatório)
+- `quantidade`: number (obrigatório)
+- `imagem`: File (obrigatório)
+
+**Resposta:**
+```json
+{
+  "id": "string",
+  "nome": "string",
+  "preco": number,
+  "quantidade": number,
+  "imagemUrl": "string"
+}
+```
+
+#### Atualizar Produto
+```http
+PUT /api/produtos/:id
+```
+**Body (FormData):**
+- `nome`: string (obrigatório)
+- `preco`: number (obrigatório)
+- `quantidade`: number (obrigatório)
+- `imagem`: File (opcional)
+
+**Resposta:**
+```json
+{
+  "id": "string",
+  "nome": "string",
+  "preco": number,
+  "quantidade": number,
+  "imagemUrl": "string"
+}
+```
+
+#### Excluir Produto
+```http
+DELETE /api/produtos/:id
+```
+**Resposta:** 204 No Content
+
+### Vendas
+
+#### Listar Vendas
+```http
+GET /api/vendas
+```
+**Resposta:**
+```json
+[
+  {
+    "id": "string",
+    "data": "string",
+    "itens": [
+      {
+        "produto": {
+          "id": "string",
+          "nome": "string",
+          "preco": number
+        },
+        "quantidade": number
+      }
+    ],
+    "total": number,
+    "formaPagamento": "string",
+    "status": "string"
+  }
+]
+```
+
+#### Criar Venda
+```http
+POST /api/vendas
+```
+**Body:**
+```json
+{
+  "itens": [
+    {
+      "produtoId": "string",
+      "quantidade": number
+    }
+  ],
+  "formaPagamento": "string"
+}
+```
+**Resposta:**
+```json
+{
+  "id": "string",
+  "data": "string",
+  "itens": [
+    {
+      "produto": {
+        "id": "string",
+        "nome": "string",
+        "preco": number
+      },
+      "quantidade": number
+    }
+  ],
+  "total": number,
+  "formaPagamento": "string",
+  "status": "string"
+}
+```
+
+#### Cancelar Venda
+```http
+DELETE /api/vendas/:id
+```
+**Resposta:** 204 No Content
+
+### Período de Trabalho
+
+#### Iniciar Período
+```http
+POST /api/periodo-trabalho/iniciar
+```
+**Body:**
+```json
+{
+  "usuarioId": "string",
+  "usuarioNome": "string"
+}
+```
+**Resposta:**
+```json
+{
+  "id": "string",
+  "inicio": "string",
+  "fim": null,
+  "usuarioId": "string",
+  "usuarioNome": "string",
+  "status": "ativo"
+}
+```
+
+#### Encerrar Período
+```http
+POST /api/periodo-trabalho/encerrar/:id
+```
+**Resposta:**
+```json
+{
+  "id": "string",
+  "inicio": "string",
+  "fim": "string",
+  "usuarioId": "string",
+  "usuarioNome": "string",
+  "status": "encerrado"
+}
+```
+
+#### Buscar Período Atual
+```http
+GET /api/periodo-trabalho/atual/:usuarioId
+```
+**Resposta:**
+```json
+{
+  "id": "string",
+  "inicio": "string",
+  "fim": "string",
+  "usuarioId": "string",
+  "usuarioNome": "string",
+  "status": "string"
+}
+```
+
+### Autenticação
+
+#### Login
+```http
+POST /api/auth/login
+```
+**Body:**
+```json
+{
+  "email": "string",
+  "senha": "string"
+}
+```
+**Resposta:**
+```json
+{
+  "token": "string",
+  "usuario": {
+    "id": "string",
+    "nome": "string",
+    "email": "string",
+    "role": "string"
+  }
+}
+``` 

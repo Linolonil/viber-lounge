@@ -1,3 +1,29 @@
 [
-  
+  {
+    "itens": [
+      {
+        "produtoId": "m9xoywx1uej8jtinofd",
+        "produtoNome": "gin 2",
+        "precoUnitario": 20.5,
+        "quantidade": 1,
+        "subtotal": 20.5,
+        "estoqueAntes": 1,
+        "estoqueDepois": 0
+      }
+    ],
+    "cliente": "222",
+    "formaPagamento": "debito",
+    "total": 20.5,
+    "status": "cancelada",
+    "usuarioId": "zz2n1l962",
+    "usuarioNome": "lino",
+    "periodoId": "odavk58zi",
+    "terminalId": "1",
+    "id": "m9y6is027iw77buvfbo",
+    "createdAt": "2025-04-26T12:10:54.912Z",
+    "canceladaPorId": "zz2n1l962",
+    "canceladaPorNome": "lino",
+    "canceladaEm": "2025-04-26T12:11:47.701Z",
+    "motivoCancelamento": "faltou um item"
+  }
 ]

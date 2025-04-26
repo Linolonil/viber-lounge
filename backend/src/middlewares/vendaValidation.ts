@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { Venda } from '../types/Venda';
 
 export const validateVenda = (req: Request, res: Response, next: NextFunction): void => {
-  const vendaData: Omit<Venda, 'id'> = req.body;
+  const vendaData: Omit<Venda, 'id' | 'createdAt' | 'data' | 'hora'> = req.body;
 
   // Validar itens
   if (!vendaData.itens || !Array.isArray(vendaData.itens) || vendaData.itens.length === 0) {
@@ -12,7 +12,7 @@ export const validateVenda = (req: Request, res: Response, next: NextFunction): 
 
   // Validar cada item
   for (const item of vendaData.itens) {
-    if (!item.produto || !item.produto.id) {
+    if (!item.produtoId) {
       res.status(400).json({ error: 'Cada item deve ter um produto válido' });
       return;
     }

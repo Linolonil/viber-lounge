@@ -73,13 +73,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-semibold tracking-tight text-white font-['Poppins']">Dashboard</h2>
-        <p className="text-muted-foreground">Bem-vindo, {user?.nome}</p>
-      </div>
-
-      <PeriodoTrabalhoCard />
-
       {user?.role === 'admin' && (
         <>
           <div className="flex items-center justify-between">

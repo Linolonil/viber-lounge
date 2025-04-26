@@ -1,6 +1,7 @@
 import { DadosGrafico, Produto, Venda, ItemVenda, FormaPagamento, PeriodoTrabalho } from "@/lib/types";
+import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 export const API_IMG = import.meta.env.VITE_API_IMG_URL;
 
 interface ApiError {
@@ -96,6 +97,11 @@ export const api = {
     await handleError(response);
   },
 
+  deleteImagemProduto: async (id: string) => {
+    const response = await axios.delete(`${API_URL}/produtos/${id}/imagem`);
+    return response.data;
+  },
+
   // Vendas
   getVendas: async (): Promise<Venda[]> => {
     const response = await fetch(`${API_URL}/vendas`, {
@@ -118,7 +124,7 @@ export const api = {
     return response.json();
   },
 
-  createVenda: async (venda: Omit<Venda, 'id'>): Promise<Venda> => {
+  createVenda: async (venda: Omit<Venda, 'id' | 'createdAt'>): Promise<Venda> => {
     const response = await fetch(`${API_URL}/vendas`, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -136,21 +142,11 @@ export const api = {
     return response.json();
   },
 
-  // Novos métodos de cancelamento
-  cancelSale: async (id: string): Promise<Venda> => {
+  cancelSale: async (id: string, motivo: string): Promise<Venda> => {
     const response = await fetch(`${API_URL}/vendas/${id}`, {
       method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    await handleError(response);
-    return response.json();
-  },
-
-  cancelItem: async (id: string, itemId: string, quantidade: number): Promise<Venda> => {
-    const response = await fetch(`${API_URL}/vendas/${id}/itens/${itemId}`, {
-      method: 'DELETE',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ quantidade }),
+      body: JSON.stringify({ motivo })
     });
     await handleError(response);
     return response.json();
@@ -195,6 +191,7 @@ export const ProdutoService = {
   updateProduto: api.updateProduto,
   updateProdutoWithImage: api.updateProdutoWithImage,
   deleteProduto: api.deleteProduto,
+  deleteImagemProduto: api.deleteImagemProduto,
 };
 
 export const VendaService = {
@@ -203,7 +200,6 @@ export const VendaService = {
   createVenda: api.createVenda,
   getVendasByDate: api.getVendasByDate,
   cancelSale: api.cancelSale,
-  cancelItem: api.cancelItem,
   getVendasPorPeriodo: api.getVendasPorPeriodo,
 };
 
@@ -217,7 +213,6 @@ export const DashboardService = {
 
 export const TraceService = {
   cancelSale: api.cancelSale,
-  cancelItem: api.cancelItem,
   getTraceByDate: api.getTraceByDate,
 };
 

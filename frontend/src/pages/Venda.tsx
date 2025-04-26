@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { API_IMG, ProdutoService, VendaService, generateId } from "@/services/api";
+import { useNavigate } from "react-router-dom";
+import { API_IMG, ProdutoService, VendaService } from "@/services/api";
 import type { Venda } from "@/lib/types";
-import { Produto, ItemVenda, FormaPagamento } from "@/lib/types";
+import { Produto, FormaPagamento } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,20 +25,35 @@ import { toast } from "sonner";
 import { Search, ShoppingCart, Plus, Minus, Trash2, Check, CreditCard, Wallet, Banknote, QrCode } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePeriodoTrabalho } from "@/contexts/PeriodoTrabalhoContext";
+
+interface CarrinhoItem {
+  produtoId: string;
+  quantidade: number;
+  precoUnitario: number;
+  produto?: Produto;
+}
 
 export default function Venda() {
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const { periodoAtual } = usePeriodoTrabalho();
   const [produtos, setProdutos] = useState<Produto[]>([]);
-  const [carrinhoItens, setCarrinhoItens] = useState<ItemVenda[]>([]);
+  const [carrinhoItens, setCarrinhoItens] = useState<CarrinhoItem[]>([]);
   const [filtro, setFiltro] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cliente, setCliente] = useState("");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">("");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   useEffect(() => {
+    if (!periodoAtual) {
+      toast.error("É necessário iniciar um turno para realizar vendas");
+      navigate("/dashboard");
+      return;
+    }
     carregarProdutos();
-  }, []);
+  }, [periodoAtual, navigate]);
 
   const carregarProdutos = async () => {
     try {
@@ -57,7 +73,7 @@ export default function Venda() {
 
     if (itemExistente) {
       if (itemExistente.quantidade >= produto.quantidade) {
-        alert('Quantidade indisponível em estoque');
+        toast.error('Quantidade indisponível em estoque');
         return;
       }
       setCarrinhoItens(
@@ -92,7 +108,7 @@ export default function Venda() {
 
     const produto = produtos.find(p => p.id === produtoId);
     if (novaQuantidade > (produto?.quantidade || 0)) {
-      alert('Quantidade indisponível em estoque');
+      toast.error('Quantidade indisponível em estoque');
       return;
     }
 
@@ -126,6 +142,12 @@ export default function Venda() {
   };
 
   const confirmarVenda = async () => {
+    if (!periodoAtual) {
+      toast.error("É necessário iniciar um turno para realizar vendas");
+      navigate("/dashboard");
+      return;
+    }
+
     if (!cliente) {
       toast.error("Informe o nome do cliente");
       return;
@@ -138,15 +160,16 @@ export default function Venda() {
     
     try {
       setIsLoading(true);
-      const dataVenda = new Date();
-      const dataFormatada = dataVenda.toISOString().split('T')[0]; // Pega apenas YYYY-MM-DD
       
-      const venda: Omit<Venda, 'id'> = {
-        data: dataFormatada,
+      const venda: Omit<Venda, 'id' | 'createdAt'> = {
         itens: carrinhoItens.map(item => ({
           produtoId: item.produtoId,
           quantidade: item.quantidade,
-          precoUnitario: item.precoUnitario
+          precoUnitario: item.precoUnitario,
+          produtoNome: item.produto?.nome || '',
+          subtotal: item.precoUnitario * item.quantidade,
+          estoqueAntes: item.produto?.quantidade || 0,
+          estoqueDepois: (item.produto?.quantidade || 0) - item.quantidade
         })),
         cliente,
         formaPagamento: formaPagamento as FormaPagamento,
@@ -154,7 +177,8 @@ export default function Venda() {
         status: 'ativa',
         usuarioId: user?.id || '',
         usuarioNome: user?.email || '',
-        periodoId: '' // Será preenchido pelo backend
+        periodoId: periodoAtual.id,
+        terminalId: '1'
       };
       
       await VendaService.createVenda(venda);
@@ -222,7 +246,12 @@ export default function Venda() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {produtosFiltrados.map(produto => (
-                <Card key={produto.id} className="bg-zinc-800 border-zinc-700 overflow-hidden transition-all hover:shadow-lg hover:shadow-viber-gold/20">
+                <Card key={produto.id} className="bg-zinc-800 border-zinc-700 overflow-hidden transition-all hover:shadow-lg hover:shadow-viber-purple/20 relative">
+                  {produto.quantidade === 0 && (
+                    <div className="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 text-sm font-medium transform translate-x-2 -translate-y-0 z-10 rounded-full">
+                      Esgotado
+                    </div>
+                  )}
                   <div className="aspect-video w-full overflow-hidden">
                     {produto.imagemUrl ? (
                       <img 
@@ -244,19 +273,19 @@ export default function Venda() {
                       <p className="text-viber-gold text-xl font-semibold">
                         R$ {produto.preco.toFixed(2).replace('.', ',')}
                       </p>
-                      <p className="text-gray-400 text-sm">
+                      <p className={`text-sm ${produto.quantidade === 0 ? 'text-red-500' : 'text-gray-400'}`}>
                         Estoque: {produto.quantidade}
                       </p>
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button 
-                      className="w-full bg-viber-gold hover:bg-viber-gold/80 text-black"
+                    <Button
                       onClick={() => adicionarAoCarrinho(produto)}
-                      disabled={produto.quantidade <= 0}
+                      disabled={produto.quantidade === 0}
+                      className="w-full gap-2 bg-viber-purple hover:bg-viber-purple/80 text-white"
                     >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      {produto.quantidade <= 0 ? "Sem estoque" : "Adicionar"}
+                      <Plus className="h-4 w-4" />
+                      {produto.quantidade === 0 ? 'Produto Esgotado' : 'Adicionar ao Carrinho'}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -347,7 +376,7 @@ export default function Venda() {
                   <div className="pt-4 border-t border-zinc-700">
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-gray-400">Total:</span>
-                      <span className="text-viber-gold text-xl font-semibold">
+                      <span className="text-viber-purple text-xl font-semibold">
                         R$ {calcularTotal().toFixed(2).replace('.', ',')}
                       </span>
                     </div>
@@ -361,7 +390,7 @@ export default function Venda() {
                         Limpar
                       </Button>
                       <Button
-                        className="flex-1 bg-viber-gold hover:bg-viber-gold/80 text-black"
+                        className="flex-1 bg-viber-purple hover:bg-viber-purple/80 text-white"
                         onClick={finalizarVenda}
                       >
                         Finalizar Venda
@@ -419,7 +448,7 @@ export default function Venda() {
             <div className="pt-4 border-t border-zinc-700">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-gray-400">Total da Venda:</span>
-                <span className="text-viber-gold text-xl font-semibold">
+                <span className="text-viber-purple text-xl font-semibold">
                   R$ {calcularTotal().toFixed(2).replace('.', ',')}
                 </span>
               </div>
@@ -430,13 +459,13 @@ export default function Venda() {
             <Button 
               variant="outline" 
               onClick={() => setDialogOpen(false)}
-              className="border-zinc-600 text-gray-200 hover:bg-zinc-700 text-black"
+              className="border-zinc-600 text-gray-200 hover:bg-zinc-700"
             >
               Cancelar
             </Button>
             <Button 
               onClick={confirmarVenda}
-              className="bg-viber-gold hover:bg-viber-gold/80 text-black"
+              className="bg-viber-purple hover:bg-viber-purple/80 text-white"
               disabled={isLoading}
             >
               {isLoading ? "Processando..." : "Confirmar Venda"}

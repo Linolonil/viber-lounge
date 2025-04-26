@@ -21,11 +21,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Search, Download, Filter, Calendar, User, DollarSign } from "lucide-react";
+import { Search, Download, Filter, Calendar, User, DollarSign, X } from "lucide-react";
 import { format, isValid, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface VendasPorFuncionario {
   usuarioId: string;
@@ -45,6 +53,9 @@ export default function HistoricoVendas() {
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
   const [formaPagamento, setFormaPagamento] = useState<string>("todos");
+  const [dialogCancelarOpen, setDialogCancelarOpen] = useState(false);
+  const [vendaParaCancelar, setVendaParaCancelar] = useState<Venda | null>(null);
+  const [motivoCancelamento, setMotivoCancelamento] = useState("");
   const { user } = useAuth();
 
   const { data: vendas, isLoading, error } = useQuery({
@@ -60,6 +71,7 @@ export default function HistoricoVendas() {
   }, [error]);
 
   const formatarData = (dataString: string) => {
+    console.log(dataString);
     try {
       const data = parseISO(dataString);
       if (!isValid(data)) {
@@ -96,7 +108,7 @@ export default function HistoricoVendas() {
           const dataInicioObj = parseISO(dataInicio);
           if (isValid(dataInicioObj)) {
             vendasFiltradas = vendasFiltradas.filter(venda => {
-              const dataVenda = parseISO(venda.data);
+              const dataVenda = parseISO(venda.createdAt);
               return isValid(dataVenda) && dataVenda >= dataInicioObj;
             });
           }
@@ -105,7 +117,7 @@ export default function HistoricoVendas() {
           const dataFimObj = parseISO(dataFim);
           if (isValid(dataFimObj)) {
             vendasFiltradas = vendasFiltradas.filter(venda => {
-              const dataVenda = parseISO(venda.data);
+              const dataVenda = parseISO(venda.createdAt);
               return isValid(dataVenda) && dataVenda <= dataFimObj;
             });
           }
@@ -118,9 +130,10 @@ export default function HistoricoVendas() {
           );
         }
 
-        // Recalcular totais
-        const totalVendas = vendasFiltradas.length;
-        const totalValor = vendasFiltradas.reduce((total, venda) => total + (venda.total || 0), 0);
+        // Recalcular totais excluindo vendas canceladas
+        const vendasAtivas = vendasFiltradas.filter(venda => venda.status === 'ativa');
+        const totalVendas = vendasAtivas.length;
+        const totalValor = vendasAtivas.reduce((total, venda) => total + (venda.total || 0), 0);
 
         return {
           ...funcionario,
@@ -157,7 +170,7 @@ export default function HistoricoVendas() {
       const dataInicioObj = parseISO(dataInicio);
       if (isValid(dataInicioObj)) {
         vendasFiltradas = vendasFiltradas.filter(venda => {
-          const dataVenda = parseISO(venda.data);
+          const dataVenda = parseISO(venda.createdAt);
           return isValid(dataVenda) && dataVenda >= dataInicioObj;
         });
       }
@@ -166,7 +179,7 @@ export default function HistoricoVendas() {
       const dataFimObj = parseISO(dataFim);
       if (isValid(dataFimObj)) {
         vendasFiltradas = vendasFiltradas.filter(venda => {
-          const dataVenda = parseISO(venda.data);
+          const dataVenda = parseISO(venda.createdAt);
           return isValid(dataVenda) && dataVenda <= dataFimObj;
         });
       }
@@ -180,11 +193,12 @@ export default function HistoricoVendas() {
     }
 
     // Para não-admin, criar um único grupo com as vendas do usuário
+    const vendasAtivas = vendasFiltradas.filter(venda => venda.status === 'ativa');
     const vendasPorFuncionario = [{
       usuarioId: user?.id || '',
       usuarioNome: user?.email || '',
-      totalVendas: vendasFiltradas.length,
-      totalValor: vendasFiltradas.reduce((total, venda) => total + (venda.total || 0), 0),
+      totalVendas: vendasAtivas.length,
+      totalValor: vendasAtivas.reduce((total, venda) => total + (venda.total || 0), 0),
       vendas: vendasFiltradas
     }];
 
@@ -222,7 +236,7 @@ export default function HistoricoVendas() {
     conteudo += "Detalhes das Vendas:\n";
     vendasFiltradas.forEach(venda => {
       conteudo += `\nVenda ID: ${venda.id}\n`;
-      conteudo += `Data: ${formatarData(venda.data)}\n`;
+      conteudo += `Data: ${formatarData(venda.createdAt)}\n`;
       conteudo += `Cliente: ${venda.cliente || 'Não informado'}\n`;
       conteudo += `Vendedor: ${venda.usuarioNome}\n`;
       conteudo += `Forma de Pagamento: ${venda.formaPagamento}\n`;
@@ -255,7 +269,7 @@ export default function HistoricoVendas() {
 
   const formatarVenda = (venda: Venda) => {
     let conteudo = `Venda #${venda.id}\n`;
-    conteudo += `Data: ${new Date(venda.data).toLocaleString()}\n`;
+    conteudo += `Data: ${new Date(venda.createdAt).toLocaleString()}\n`;
     conteudo += `Cliente: ${venda.cliente}\n`;
     conteudo += `Forma de Pagamento: ${venda.formaPagamento}\n`;
     conteudo += `Total: R$ ${venda.total.toFixed(2)}\n\n`;
@@ -264,6 +278,25 @@ export default function HistoricoVendas() {
       conteudo += `- ${item.quantidade}x ${item.produto?.nome || 'Produto não encontrado'} = R$ ${(item.precoUnitario * item.quantidade).toFixed(2)}\n`;
     });
     return conteudo;
+  };
+
+  const handleCancelarVenda = async () => {
+    if (!vendaParaCancelar || !motivoCancelamento) {
+      toast.error("Informe o motivo do cancelamento");
+      return;
+    }
+
+    try {
+      await VendaService.cancelSale(vendaParaCancelar.id, motivoCancelamento);
+      toast.success("Venda cancelada com sucesso");
+      setDialogCancelarOpen(false);
+      setVendaParaCancelar(null);
+      setMotivoCancelamento("");
+      // Recarregar vendas
+      window.location.reload();
+    } catch (error) {
+      toast.error("Erro ao cancelar venda");
+    }
   };
 
   if (error) {
@@ -417,6 +450,7 @@ export default function HistoricoVendas() {
                     <TableHead className="text-gray-200">Forma de Pagamento</TableHead>
                     <TableHead className="text-gray-200">Total</TableHead>
                     <TableHead className="text-gray-200">Status</TableHead>
+                    <TableHead className="text-gray-200">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -424,7 +458,7 @@ export default function HistoricoVendas() {
                     <TableRow key={venda.id} className="border-zinc-700">
                       <TableCell className="text-gray-300">{venda.id}</TableCell>
                       <TableCell className="text-gray-300">
-                        {formatarData(venda.data)}
+                        {formatarData(venda.createdAt)}
                       </TableCell>
                       <TableCell className="text-gray-300">{venda.cliente || 'Não informado'}</TableCell>
                       <TableCell className="text-gray-300">
@@ -448,6 +482,21 @@ export default function HistoricoVendas() {
                           {venda.status === 'ativa' ? 'Ativa' : 'Cancelada'}
                         </span>
                       </TableCell>
+                      <TableCell>
+                        {venda.status === 'ativa' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                            onClick={() => {
+                              setVendaParaCancelar(venda);
+                              setDialogCancelarOpen(true);
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -456,6 +505,47 @@ export default function HistoricoVendas() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={dialogCancelarOpen} onOpenChange={setDialogCancelarOpen}>
+        <DialogContent className="bg-zinc-800 text-white border-zinc-700">
+          <DialogHeader>
+            <DialogTitle>Cancelar Venda</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="motivo" className="text-gray-200">Motivo do Cancelamento</Label>
+              <Input
+                id="motivo"
+                value={motivoCancelamento}
+                onChange={(e) => setMotivoCancelamento(e.target.value)}
+                className="bg-zinc-700 border-zinc-600 text-white"
+                placeholder="Digite o motivo do cancelamento"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setDialogCancelarOpen(false);
+                setVendaParaCancelar(null);
+                setMotivoCancelamento("");
+              }}
+              className="border-zinc-600 text-gray-200 hover:bg-zinc-700"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCancelarVenda}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Confirmar Cancelamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

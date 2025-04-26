@@ -10,6 +10,10 @@ export interface ItemVenda {
   produtoId: string;
   quantidade: number;
   precoUnitario: number;
+  produtoNome: string;
+  subtotal: number;
+  estoqueAntes: number;
+  estoqueDepois: number;
   produto?: Produto; // Opcional para compatibilidade com o frontend
 }
 
@@ -18,15 +22,20 @@ export type StatusVenda = "ativa" | "cancelada";
 
 export interface Venda {
   id: string;
-  data: string; // ISO string
-  itens: ItemVenda[];
-  cliente: string;
-  formaPagamento: FormaPagamento;
-  total: number;
-  status: StatusVenda;
+  createdAt: string; // ISO string
   usuarioId: string;
   usuarioNome: string;
+  terminalId?: string;
   periodoId: string;
+  status: StatusVenda;
+  canceladaPorId?: string;
+  canceladaPorNome?: string;
+  canceladaEm?: string;
+  motivoCancelamento?: string;
+  itens: ItemVenda[];
+  total: number;
+  formaPagamento: FormaPagamento;
+  cliente?: string;
 }
 
 export interface DadosGrafico {

@@ -1,3 +1,12 @@
 [
- 
+  {
+    "id": "odavk58zi",
+    "usuarioId": "zz2n1l962",
+    "usuarioNome": "lino",
+    "dataInicio": "2025-04-26T12:09:45.142Z",
+    "status": "fechado",
+    "totalVendas": 1,
+    "totalValor": 20.5,
+    "dataFim": "2025-04-26T12:13:36.881Z"
+  }
 ]

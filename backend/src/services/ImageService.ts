@@ -5,7 +5,6 @@ import sharp from 'sharp';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { join, extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { AppError } from '../middlewares/errorHandler';
 
 const UPLOAD_DIR = join(__dirname, '../../uploads/produtos');
 

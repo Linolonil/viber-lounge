@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { Pencil, Trash2, Search, ImageIcon } from "lucide-react";
 import { api, API_IMG } from "@/services/api";
+import { ProductImage } from "@/components/ui/product-image";
 
 export default function ListaProdutos() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -22,9 +23,11 @@ export default function ListaProdutos() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [nome, setNome] = useState("");
   const [preco, setPreco] = useState("");
-  const [imagem, setImagem] = useState("");
+  const [quantidade, setQuantidade] = useState("");
+  const [imagem, setImagem] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-
+  const [imagemAntiga, setImagemAntiga] = useState<string | null>(null);
+  
   useEffect(() => {
     carregarProdutos();
   }, []);
@@ -38,16 +41,15 @@ export default function ListaProdutos() {
       toast.error("Erro ao carregar produtos");
     }
   };
-  console.log(produtos);
 
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImagem(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        setImagem(base64String);
         setPreviewImage(base64String);
       };
       reader.readAsDataURL(file);
@@ -58,36 +60,58 @@ export default function ListaProdutos() {
     setProdutoEditando(produto);
     setNome(produto.nome);
     setPreco(produto.preco.toString().replace(".", ","));
-    setImagem(produto.imagemUrl);
+    setQuantidade(produto.quantidade.toString());
+    setImagem(null);
     setPreviewImage(produto.imagemUrl);
+    setImagemAntiga(produto.imagemUrl);
     setDialogOpen(true);
   };
 
   const handleSalvar = async () => {
     if (!produtoEditando) return;
     
-    if (!nome || !preco) {
-      toast.error("Nome e preço são obrigatórios");
+    if (!nome || !preco || !quantidade) {
+      toast.error("Nome, preço e quantidade são obrigatórios");
       return;
     }
     
     const precoNumerico = parseFloat(preco.replace(",", "."));
+    const quantidadeNumerica = parseInt(quantidade);
     
     if (isNaN(precoNumerico) || precoNumerico <= 0) {
       toast.error("Preço inválido");
       return;
     }
-    
-    const produtoAtualizado: Produto = {
-      id: produtoEditando.id,
-      nome,
-      preco: precoNumerico,
-      imagemUrl: imagem || produtoEditando.imagemUrl,
-      quantidade: produtoEditando.quantidade
-    };
+
+    if (isNaN(quantidadeNumerica) || quantidadeNumerica < 0) {
+      toast.error("Quantidade inválida");
+      return;
+    }
     
     try {
-      await api.updateProduto(produtoAtualizado.id, produtoAtualizado);
+      // Verifica se há uma nova imagem e se é diferente da atual
+      if (imagem && previewImage !== imagemAntiga) {
+        // Se houver nova imagem, usa FormData
+        const formData = new FormData();
+        formData.append('nome', nome);
+        formData.append('preco', precoNumerico.toString());
+        formData.append('quantidade', quantidadeNumerica.toString());
+        formData.append('imagem', imagem);
+        
+        await api.updateProdutoWithImage(produtoEditando.id, formData);
+      } else {
+        // Se não houver nova imagem ou for a mesma, usa JSON
+        const produtoAtualizado: Produto = {
+          id: produtoEditando.id,
+          nome,
+          preco: precoNumerico,
+          imagemUrl: produtoEditando.imagemUrl,
+          quantidade: quantidadeNumerica
+        };
+        
+        await api.updateProduto(produtoAtualizado.id, produtoAtualizado);
+      }
+      
       toast.success("Produto atualizado com sucesso!");
       setDialogOpen(false);
       carregarProdutos();
@@ -143,17 +167,11 @@ export default function ListaProdutos() {
             
             <Card key={produto.id} className="bg-zinc-800 border-zinc-700 overflow-hidden flex flex-col">
               <div className="relative aspect-video w-full overflow-hidden">
-                {produto.imagemUrl ? (
-                  <img 
-                    src={`${API_IMG}${produto.imagemUrl}`}
-                    alt={produto.nome}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-zinc-700">
-                    <ImageIcon className="h-12 w-12 text-gray-400" />
-                  </div>
-                )}
+                <ProductImage
+                  src={produto.imagemUrl ? `${API_IMG}${produto.imagemUrl}` : null}
+                  alt={produto.nome}
+                  className="w-full h-full"
+                />
               </div>
               <CardHeader className="pb-2">
                 <CardTitle className="text-white text-lg">{produto.nome}</CardTitle>
@@ -224,6 +242,18 @@ export default function ListaProdutos() {
                 className="bg-zinc-700 border-zinc-600 text-white"
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-quantidade" className="text-gray-200">Quantidade</Label>
+              <Input
+                id="edit-quantidade"
+                type="number"
+                min="0"
+                value={quantidade}
+                onChange={(e) => setQuantidade(e.target.value)}
+                className="bg-zinc-700 border-zinc-600 text-white"
+              />
+            </div>
             
             <div className="space-y-2">
               <Label htmlFor="edit-imagem" className="text-gray-200">Imagem do Produto</Label>
@@ -238,7 +268,7 @@ export default function ListaProdutos() {
               <div className="mt-2 flex justify-center">
                 {previewImage ? (
                   <img
-                    src={previewImage}
+                    src={previewImage.startsWith('data:') ? previewImage : `${API_IMG}${previewImage}`}
                     alt="Preview"
                     className="max-h-32 max-w-full object-contain rounded-md"
                   />
@@ -256,7 +286,7 @@ export default function ListaProdutos() {
             <Button 
               variant="outline" 
               onClick={() => setDialogOpen(false)}
-              className="border-zinc-600 text-gray-200 hover:bg-zinc-700"
+              className="border-zinc-600 text-gray-200 hover:bg-zinc-700 text-black"
             >
               Cancelar
             </Button>

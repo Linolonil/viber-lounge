@@ -6,6 +6,7 @@ export interface Produto {
   preco: number;
   imagemUrl: string; // Base64 ou URL
   quantidade: number; // Quantidade em estoque
+  status: 'disponivel' | 'indisponivel'; // Status do produto
 }
 
 export type FormaPagamento = "pix" | "credito" | "debito" | "dinheiro";
