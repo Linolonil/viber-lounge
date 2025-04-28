@@ -1,0 +1,89 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0": {
+      "ViberLounge.Domain/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/ViberLounge.Domain.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/ViberLounge.Domain.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ViberLounge.Domain/1.0.0": {
+      "type": "project",
+      "path": "../ViberLounge.Domain/ViberLounge.Domain.csproj",
+      "msbuildProject": "../ViberLounge.Domain/ViberLounge.Domain.csproj"
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0": [
+      "ViberLounge.Domain >= 1.0.0"
+    ]
+  },
+  "packageFolders": {
+    "/home/claudio/.nuget/packages/": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "/home/claudio/projetos/viber-lounge/backend/src/ViberLounge.Infrastructure/ViberLounge.Infrastructure.csproj",
+      "projectName": "ViberLounge.Infrastructure",
+      "projectPath": "/home/claudio/projetos/viber-lounge/backend/src/ViberLounge.Infrastructure/ViberLounge.Infrastructure.csproj",
+      "packagesPath": "/home/claudio/.nuget/packages/",
+      "outputPath": "/home/claudio/projetos/viber-lounge/backend/src/ViberLounge.Infrastructure/obj/",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "/home/claudio/.nuget/NuGet/NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "projectReferences": {
+            "/home/claudio/projetos/viber-lounge/backend/src/ViberLounge.Domain/ViberLounge.Domain.csproj": {
+              "projectPath": "/home/claudio/projetos/viber-lounge/backend/src/ViberLounge.Domain/ViberLounge.Domain.csproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "net8.0": {
+        "targetAlias": "net8.0",
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.114/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}
