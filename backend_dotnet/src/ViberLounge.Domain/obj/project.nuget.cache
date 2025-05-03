@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Mncwc3hW2Vi8253qSI5jaHC/Ja0nFlkm1w2pmmaXE88130BrUFM7XkKjjUtb4UaINkY1idIxBCZwV7/NjBtajQ==",
+  "dgSpecHash": "Fbt3R7lNZpOl7JxuTWze12I+od0ybn8/xUa6LjuFqQQB7CpDyxmMa6LVq0+Zg2r4KAW6ef21tf4tsMTZegsgzQ==",
   "success": true,
-  "projectFilePath": "/home/claudio/projetos/viber-lounge/backend/src/ViberLounge.Domain/ViberLounge.Domain.csproj",
+  "projectFilePath": "/home/claudio/projetos/viber-lounge/backend_dotnet/src/ViberLounge.Domain/ViberLounge.Domain.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

@@ -1,3 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+using ViberLounge.Domain.Entities;
+using ViberLounge.Infrastructure.Data;
+using ViberLounge.Infrastructure.Repositories.Interfaces;
+
 namespace ViberLounge.Infrastructure.Repositories
 {
     public class VendaRepository : IVendaRepository
@@ -13,7 +18,8 @@ namespace ViberLounge.Infrastructure.Repositories
         {
             return await _context.Vendas
                 .Include(v => v.Itens)
-                .FirstOrDefaultAsync(v => v.Id == id);
+                .FirstOrDefaultAsync(v => v.Id == id) 
+                ?? throw new InvalidOperationException("Venda not found.");
         }
 
         public async Task<IEnumerable<Venda>> GetAllAsync()

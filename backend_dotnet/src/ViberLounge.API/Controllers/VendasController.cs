@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
+using ViberLounge.Application.Services.Interfaces;
+
 namespace ViberLounge.API.Controllers;
 
 [ApiController]
@@ -36,18 +39,18 @@ public class VendasController : ControllerBase
         return Ok(vendas);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<VendaDto>> Create(CriarVendaCommand command)
-    {
-        var venda = await _vendaService.CreateAsync(command);
-        return CreatedAtAction(nameof(GetById), new { id = venda.Id }, venda);
-    }
+    // [HttpPost]
+    // public async Task<ActionResult<VendaDto>> Create(CriarVendaCommand command)
+    // {
+    //     var venda = await _vendaService.CreateAsync(command);
+    //     return CreatedAtAction(nameof(GetById), new { id = venda.Id }, venda);
+    // }
 
-    [HttpPost("{id}/cancelar")]
-    public async Task<ActionResult<VendaDto>> Cancel(int id, [FromBody] CancelarVendaCommand command)
-    {
-        command.Id = id;
-        var venda = await _vendaService.CancelAsync(command);
-        return Ok(venda);
-    }
+    // [HttpPost("{id}/cancelar")]
+    // public async Task<ActionResult<VendaDto>> Cancel(int id, [FromBody] CancelarVendaCommand command)
+    // {
+    //     command.Id = id;
+    //     var venda = await _vendaService.CancelAsync(command);
+    //     return Ok(venda);
+    // }
 }

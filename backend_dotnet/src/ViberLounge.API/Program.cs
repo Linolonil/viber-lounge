@@ -1,17 +1,18 @@
+using ViberLounge.API.Extensions;
+using ViberLounge.Infrastructure.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration); // Certifique-se de importar o namespace correto
 
 var app = builder.Build();
 
-// Initialize database
-using (var scope = app.Services.CreateScope())
+await using (var scope = app.Services.CreateAsyncScope())
 {
-    await scope.ServiceProvider.InitializeDatabaseAsync();
+    await scope.ServiceProvider.InitializeDatabaseAsync(); // Ensure the extension method is implemented
 }
 
 // Configure the HTTP request pipeline.
@@ -25,4 +26,4 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();

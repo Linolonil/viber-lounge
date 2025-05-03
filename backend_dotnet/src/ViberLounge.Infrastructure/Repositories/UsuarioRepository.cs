@@ -1,3 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+using ViberLounge.Domain.Entities;
+using ViberLounge.Infrastructure.Data;
+using ViberLounge.Infrastructure.Repositories.Interfaces;
+
 namespace ViberLounge.Infrastructure.Repositories
 {
     public class UsuarioRepository : IUsuarioRepository
@@ -11,13 +16,15 @@ namespace ViberLounge.Infrastructure.Repositories
 
         public async Task<Usuario> GetByIdAsync(int id)
         {
-            return await _context.Usuarios.FindAsync(id);
+            var usuario = await _context.Usuarios.FindAsync(id) ?? throw new KeyNotFoundException($"Usuario with ID {id} not found.");
+            return usuario;
         }
 
         public async Task<Usuario> GetByEmailAsync(string email)
         {
-            return await _context.Usuarios
-                .FirstOrDefaultAsync(u => u.Email == email);
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Email == email) ?? throw new KeyNotFoundException($"Usuario with email {email} not found.");
+            return usuario;
         }
 
         public async Task AddAsync(Usuario usuario)

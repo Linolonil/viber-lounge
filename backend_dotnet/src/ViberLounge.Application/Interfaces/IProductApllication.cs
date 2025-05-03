@@ -1,3 +1,5 @@
+using ViberLounge.API.Controllers;
+
 namespace ViberLounge.Application.Interfaces
 {
     public interface IProductApplication

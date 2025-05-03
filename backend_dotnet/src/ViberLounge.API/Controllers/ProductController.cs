@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
+using ViberLounge.Application.Services.Interfaces;
+
 namespace ViberLounge.API.Controllers;
 
 [ApiController]
@@ -26,10 +29,10 @@ public class ProdutosController : ControllerBase
         return Ok(produto);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<ProdutoDto>> Create(CriarProdutoCommand command)
-    {
-        var produto = await _produtoService.CreateAsync(command);
-        return CreatedAtAction(nameof(GetById), new { id = produto.Id }, produto);
-    }
+    // [HttpPost]
+    // public async Task<ActionResult<ProdutoDto>> Create(CriarProdutoCommand command)
+    // {
+    //     var produto = await _produtoService.CreateAsync(command);
+    //     return CreatedAtAction(nameof(GetById), new { id = produto.Id }, produto);
+    // }
 }

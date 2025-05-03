@@ -1,3 +1,8 @@
+using ViberLounge.Domain.Entities;
+using ViberLounge.Infrastructure.Data;
+using ViberLounge.Infrastructure.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
 namespace ViberLounge.Infrastructure.Repositories
 {
     public class ProdutoRepository : IProdutoRepository
@@ -11,7 +16,8 @@ namespace ViberLounge.Infrastructure.Repositories
 
         public async Task<Produto> GetByIdAsync(int id)
         {
-            return await _context.Produtos.FindAsync(id);
+            var produto = await _context.Produtos.FindAsync(id) ?? throw new KeyNotFoundException($"Produto with ID {id} not found.");
+            return produto;
         }
 
         public async Task<IEnumerable<Produto>> GetAllAsync()

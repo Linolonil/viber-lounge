@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ViberLounge.Application\ViberLounge.Application.csproj" />
     <ProjectReference Include="..\ViberLounge.Domain\ViberLounge.Domain.csproj" />
+    <ProjectReference Include="..\ViberLounge.Infrastructure\ViberLounge.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

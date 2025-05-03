@@ -1,8 +1,20 @@
 {
   "version": 2,
-  "dgSpecHash": "kvNsq7nAx+WDjohQkFBcc70vd7k9dqjBAktyagNsvxwncaoWR/W3LUpy770nHD0BJUb+rQ6L7arGYytHlJoLQQ==",
+  "dgSpecHash": "RhcfKcQ3167vlehKw71sqwCwO8gWuCuw3zDVhTNmBstLPKcT2MWiQYJcnVj5EnSGoqi8uMCHF4XIuM8UR8VMaQ==",
   "success": true,
-  "projectFilePath": "/home/claudio/projetos/viber-lounge/backend/src/ViberLounge.Application/ViberLounge.Application.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "/home/claudio/projetos/viber-lounge/backend_dotnet/src/ViberLounge.Application/ViberLounge.Application.csproj",
+  "expectedPackageFiles": [
+    "/home/claudio/.nuget/packages/automapper/12.0.1/automapper.12.0.1.nupkg.sha512",
+    "/home/claudio/.nuget/packages/automapper.extensions.microsoft.dependencyinjection/12.0.1/automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",
+    "/home/claudio/.nuget/packages/fluentvalidation/11.9.0/fluentvalidation.11.9.0.nupkg.sha512",
+    "/home/claudio/.nuget/packages/mediatr/11.1.0/mediatr.11.1.0.nupkg.sha512",
+    "/home/claudio/.nuget/packages/mediatr.contracts/1.0.1/mediatr.contracts.1.0.1.nupkg.sha512",
+    "/home/claudio/.nuget/packages/mediatr.extensions.microsoft.dependencyinjection/11.1.0/mediatr.extensions.microsoft.dependencyinjection.11.1.0.nupkg.sha512",
+    "/home/claudio/.nuget/packages/microsoft.csharp/4.7.0/microsoft.csharp.4.7.0.nupkg.sha512",
+    "/home/claudio/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/7.0.0/microsoft.extensions.dependencyinjection.abstractions.7.0.0.nupkg.sha512",
+    "/home/claudio/.nuget/packages/microsoft.extensions.options/6.0.0/microsoft.extensions.options.6.0.0.nupkg.sha512",
+    "/home/claudio/.nuget/packages/microsoft.extensions.primitives/6.0.0/microsoft.extensions.primitives.6.0.0.nupkg.sha512",
+    "/home/claudio/.nuget/packages/system.runtime.compilerservices.unsafe/6.0.0/system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512"
+  ],
   "logs": []
 }

@@ -21,7 +21,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=seu_banco;Username=admin;Password=admin123
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ViberLounge;Username=admin;Password=admin123
     depends_on:
       - postgres
 

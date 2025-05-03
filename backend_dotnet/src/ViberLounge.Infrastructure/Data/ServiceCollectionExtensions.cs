@@ -8,8 +8,8 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext(configuration);
-        
+        services.AddDbContext<ViberLoungeDbContext>(options =>
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
         return services;
     }
 

@@ -1,3 +1,7 @@
+using MediatR;
+using ViberLounge.API.Controllers;
+using ViberLounge.Application.Services.Interfaces;
+
 namespace ViberLounge.Application.Services
 {
     public class ProdutoService : IProdutoService
@@ -9,29 +13,44 @@ namespace ViberLounge.Application.Services
             _mediator = mediator;
         }
 
-        public async Task<ProdutoDto> GetByIdAsync(int id)
+        // public async Task<ProdutoDto> GetByIdAsync(int id)
+        // {
+        //     return await _mediator.Send(new GetProdutoByIdQuery { Id = id });
+        // }
+
+        // public async Task<List<ProdutoDto>> GetAllAsync()
+        // {
+        //     return await _mediator.Send(new GetAllProdutosQuery());
+        // }
+
+        // public async Task<ProdutoDto> CreateAsync(CriarProdutoCommand command)
+        // {
+        //     return await _mediator.Send(command);
+        // }
+
+        // public async Task<ProdutoDto> UpdateAsync(AtualizarProdutoCommand command)
+        // {
+        //     return await _mediator.Send(command);
+        // }
+
+        // public async Task DeleteAsync(int id)
+        // {
+        //     await _mediator.Send(new DeletarProdutoCommand { Id = id });
+        // }
+
+        Task<ProdutoDto> IProdutoService.GetByIdAsync(int id)
         {
-            return await _mediator.Send(new GetProdutoByIdQuery { Id = id });
+            throw new NotImplementedException();
         }
 
-        public async Task<List<ProdutoDto>> GetAllAsync()
+        Task<List<ProdutoDto>> IProdutoService.GetAllAsync()
         {
-            return await _mediator.Send(new GetAllProdutosQuery());
+            throw new NotImplementedException();
         }
 
-        public async Task<ProdutoDto> CreateAsync(CriarProdutoCommand command)
+        public Task DeleteAsync(int id)
         {
-            return await _mediator.Send(command);
-        }
-
-        public async Task<ProdutoDto> UpdateAsync(AtualizarProdutoCommand command)
-        {
-            return await _mediator.Send(command);
-        }
-
-        public async Task DeleteAsync(int id)
-        {
-            await _mediator.Send(new DeletarProdutoCommand { Id = id });
+            throw new NotImplementedException();
         }
     }
 }
