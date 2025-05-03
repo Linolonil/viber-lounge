@@ -5,10 +5,10 @@ EXPOSE 5000
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY ["ViberLounge.API/ViberLounge.API.csproj", "ViberLounge.API/"]
-COPY ["ViberLounge.Application/ViberLounge.Application.csproj", "ViberLounge.Application/"]
-COPY ["ViberLounge.Domain/ViberLounge.Domain.csproj", "ViberLounge.Domain/"]
-COPY ["ViberLounge.Infrastructure/ViberLounge.Infrastructure.csproj", "ViberLounge.Infrastructure/"]
+COPY src/ViberLounge.API/ViberLounge.API.csproj ViberLounge.API/
+COPY src/ViberLounge.Application/ViberLounge.Application.csproj ViberLounge.Application/
+COPY src/ViberLounge.Domain/ViberLounge.Domain.csproj ViberLounge.Domain/
+COPY src/ViberLounge.Infrastructure/ViberLounge.Infrastructure.csproj ViberLounge.Infrastructure/
 
 RUN dotnet restore "ViberLounge.API/ViberLounge.API.csproj"
 

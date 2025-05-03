@@ -7,23 +7,23 @@ services:
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: seu_banco
+      POSTGRES_DB: ViberLounge
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: api_container
-    ports:
-      - "5000:5000"
-    environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ViberLounge;Username=admin;Password=admin123
-    depends_on:
-      - postgres
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: api_container
+  #   ports:
+  #     - "5000:5000"
+  #   environment:
+  #     - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ViberLounge;Username=admin;Password=admin123
+  #   depends_on:
+  #     - postgres
 
 volumes:
   pgdata:

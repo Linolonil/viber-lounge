@@ -6,13 +6,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddInfrastructure(builder.Configuration); // Certifique-se de importar o namespace correto
+builder.Services.AddAuthorization();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {
-    await scope.ServiceProvider.InitializeDatabaseAsync(); // Ensure the extension method is implemented
+    await scope.ServiceProvider.InitializeDatabaseAsync();
 }
 
 // Configure the HTTP request pipeline.
