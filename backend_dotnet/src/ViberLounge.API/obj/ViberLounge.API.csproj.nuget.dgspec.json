@@ -48,9 +48,21 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "AspNetCore.HealthChecks.UI.Client": {
+              "target": "Package",
+              "version": "[8.0.1, )"
+            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[8.0.14, )"
+            },
+            "Microsoft.Extensions.Diagnostics.HealthChecks": {
+              "target": "Package",
+              "version": "[8.0.15, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[8.0.2, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
@@ -104,6 +116,9 @@
             "projectReferences": {
               "/home/claudio/projetos/viber-lounge/backend_dotnet/src/ViberLounge.Domain/ViberLounge.Domain.csproj": {
                 "projectPath": "/home/claudio/projetos/viber-lounge/backend_dotnet/src/ViberLounge.Domain/ViberLounge.Domain.csproj"
+              },
+              "/home/claudio/projetos/viber-lounge/backend_dotnet/src/ViberLounge.Infrastructure/ViberLounge.Infrastructure.csproj": {
+                "projectPath": "/home/claudio/projetos/viber-lounge/backend_dotnet/src/ViberLounge.Infrastructure/ViberLounge.Infrastructure.csproj"
               }
             }
           }
@@ -126,6 +141,10 @@
               "target": "Package",
               "version": "[12.0.1, )"
             },
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
             "FluentValidation": {
               "target": "Package",
               "version": "[11.9.0, )"
@@ -137,6 +156,10 @@
             "MediatR.Extensions.Microsoft.DependencyInjection": {
               "target": "Package",
               "version": "[11.1.0, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[8.9.0, )"
             }
           },
           "imports": [
@@ -250,6 +273,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
               "version": "[8.0.4, )"
