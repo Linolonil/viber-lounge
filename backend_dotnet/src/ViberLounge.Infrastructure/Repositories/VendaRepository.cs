@@ -1,15 +1,15 @@
-using Microsoft.EntityFrameworkCore;
 using ViberLounge.Domain.Entities;
-using ViberLounge.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using ViberLounge.Infrastructure.Context;
 using ViberLounge.Infrastructure.Repositories.Interfaces;
 
 namespace ViberLounge.Infrastructure.Repositories
 {
     public class VendaRepository : IVendaRepository
     {
-        private readonly ViberLoungeDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public VendaRepository(ViberLoungeDbContext context)
+        public VendaRepository(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -41,12 +41,12 @@ namespace ViberLounge.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<Venda>> GetByPeriodoAsync(int periodoId)
-        {
-            return await _context.Vendas
-                .Include(v => v.Itens)
-                .Where(v => v.PeriodoId == periodoId)
-                .ToListAsync();
-        }
+        // public async Task<IEnumerable<Venda>> GetByPeriodoAsync(int periodoId)
+        // {
+        //     return await _context.Vendas
+        //         .Include(v => v.Itens)
+        //         .Where(v => v.PeriodoId == periodoId)
+        //         .ToListAsync();
+        // }
     }
 }

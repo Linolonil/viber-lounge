@@ -8,6 +8,6 @@ namespace ViberLounge.Infrastructure.Repositories.Interfaces
         Task<IEnumerable<Venda>> GetAllAsync();
         Task AddAsync(Venda venda);
         Task UpdateAsync(Venda venda);
-        Task<IEnumerable<Venda>> GetByPeriodoAsync(int periodoId);
+        // Task<IEnumerable<Venda>> GetByPeriodoAsync(int periodoId);
     }
 }

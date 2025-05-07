@@ -6,7 +6,8 @@ namespace ViberLounge.Infrastructure.Repositories.Interfaces
     {
         Task<Usuario> GetByIdAsync(int id);
         Task<Usuario> GetByEmailAsync(string email);
-        Task AddAsync(Usuario usuario);
-        Task UpdateAsync(Usuario usuario);
+        Task<bool> CheckPasswordAsync(Usuario user, string senha);
+        Task AddAsync(Usuario Usuario);
+        Task UpdateAsync(Usuario Usuario);
     }
 }

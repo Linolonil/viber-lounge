@@ -1,15 +1,15 @@
 using ViberLounge.Domain.Entities;
-using ViberLounge.Infrastructure.Data;
-using ViberLounge.Infrastructure.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using ViberLounge.Infrastructure.Context;
+using ViberLounge.Infrastructure.Repositories.Interfaces;
 
 namespace ViberLounge.Infrastructure.Repositories
 {
     public class ProdutoRepository : IProdutoRepository
     {
-        private readonly ViberLoungeDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public ProdutoRepository(ViberLoungeDbContext context)
+        public ProdutoRepository(ApplicationDbContext context)
         {
             _context = context;
         }

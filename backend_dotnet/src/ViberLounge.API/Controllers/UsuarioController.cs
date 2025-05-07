@@ -1,49 +1,81 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ViberLounge.Application.Services.Interfaces;
+using ViberLounge.Domain.Entities;
 
 namespace ViberLounge.API.Controllers;
+
 [ApiController]
 [Route("api/[controller]")]
-public class UsuariosController : ControllerBase
+public class AuthController : ControllerBase
 {
-    private readonly IUsuarioService _usuarioService;
+    private readonly IAuthService _authService;
 
-    public UsuariosController(IUsuarioService usuarioService)
+    public AuthController(IAuthService authService)
     {
-        _usuarioService = usuarioService;
+        _authService = authService;
+    }
+    
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        try
+        {
+            var result = await _authService.LoginAsync(request);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
     }
 
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<List<UsuarioDto>>> GetAll()
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var usuarios = await _usuarioService.GetAllAsync();
-        return Ok(usuarios);
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.Nome) ||
+                string.IsNullOrWhiteSpace(request.Email) ||
+                string.IsNullOrWhiteSpace(request.Senha))
+            {
+                throw new ArgumentException("Nome, email e senha são obrigatórios.");
+            }
+
+            Usuario? newUser = await _authService.RegisterAsync(request);
+            
+            return StatusCode(201, newUser);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
-    [HttpGet("{id}")]
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        return Ok(new { message = "Logout realizado com sucesso" });
+    }
+
+    [HttpGet("profile")]
     [Authorize]
-    public async Task<ActionResult<UsuarioDto>> GetById(int id)
+    public IActionResult Profile()
     {
-        var usuario = await _usuarioService.GetByIdAsync(id);
-        if (usuario == null) return NotFound();
+        var userId = User.FindFirst("id")?.Value;
+        var nome = User.Identity?.Name;
+        var email = User.FindFirst("email")?.Value;
+        var role = User.FindFirst("role")?.Value;
+
+        if (userId == null)
+            return Unauthorized(new { message = "Token não fornecido ou inválido" });
+
+        var usuario = new Usuario
+        {
+            Nome = nome,
+            Email = email,
+            Role = "ADMIN"
+        };
+
         return Ok(usuario);
     }
-
-    // [HttpPost]
-    // [Authorize(Roles = "Admin")]
-    // public async Task<ActionResult<UsuarioDto>> Create(CriarUsuarioCommand command)
-    // {
-    //     var usuario = await _usuarioService.CreateAsync(command);
-    //     return CreatedAtAction(nameof(GetById), new { id = usuario.Id }, usuario);
-    // }
-
-    // [HttpPost("login")]
-    // [AllowAnonymous]
-    // public async Task<ActionResult<LoginResponseDto>> Login(LoginCommand command)
-    // {
-    //     var response = await _usuarioService.LoginAsync(command);
-    //     return Ok(response);
-    // }
 }

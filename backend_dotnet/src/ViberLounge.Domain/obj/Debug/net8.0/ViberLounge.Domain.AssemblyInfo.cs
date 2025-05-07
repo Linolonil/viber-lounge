@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ViberLounge.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+80814c59ea777deeb283fc7f6d781e057c6a239e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4dbfe9832e6e153801bc7bfca4c721c868bb5096")]
 [assembly: System.Reflection.AssemblyProductAttribute("ViberLounge.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ViberLounge.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

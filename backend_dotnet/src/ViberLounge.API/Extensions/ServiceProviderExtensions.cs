@@ -1,4 +1,4 @@
-using ViberLounge.Infrastructure.Data; // Ensure this namespace matches where ViberLoungeDbContext is defined
+using ViberLounge.Infrastructure.Context;
 
 namespace ViberLounge.API.Extensions
 {
@@ -9,7 +9,7 @@ namespace ViberLounge.API.Extensions
             // Corrigido: obter o IServiceScopeFactory para criar o escopo
             var scopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
             using var scope = scopeFactory.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<ViberLoungeDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             await dbContext.Database.EnsureCreatedAsync();
         }
     }

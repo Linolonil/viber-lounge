@@ -29,7 +29,7 @@ public class VendasController : ControllerBase
         return Ok(vendas);
     }
 
-    [HttpGet("usuario/{usuarioId}")]
+    [HttpGet("UsuarioResponse/{usuarioId}")]
     public async Task<ActionResult<List<VendaDto>>> GetByUsuario(
         int usuarioId,
         [FromQuery] DateTime? dataInicio,

@@ -12,7 +12,7 @@ namespace ViberLounge.Application.Mapping
             // CreateMap<CriarProdutoCommand, Produto>();
             // CreateMap<AtualizarProdutoCommand, Produto>();
             CreateMap<Venda, VendaDto>();
-            CreateMap<ItemVenda, ItemVendaDto>();
+            CreateMap<VendaItem, ItemVendaDto>();
             CreateMap<Usuario, UsuarioDto>();
         }
     }
