@@ -1,29 +1,33 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres
-    container_name: postgres_container
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: ViberLounge
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-  # api:
+  # viber_lounge_api:
+  #   image: viber_lounge_api
+  #   container_name: viber_lounge_api
   #   build:
   #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: api_container
+  #     dockerfile: .src/ViberLounge.API/Dockerfile
   #   ports:
   #     - "5000:5000"
   #   environment:
   #     - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ViberLounge;Username=admin;Password=admin123
+  #     TZ: "America/Manaus"
   #   depends_on:
-  #     - postgres
+  #     - viber_lounge_database
+
+  viber_lounge_database:
+    image: postgres
+    container_name: viber_lounge_database
+    reastart: always,
+    environment:
+      POSTGRES_DB: ViberLounge
+      POSTGRES_USER: viber
+      POSTGRES_PASSWORD: ViberLounge2025
+    ports:
+      - "5432:5432"
+    volumes:
+      - viber_lounge_database:/var/lib/postgresql/data
+
 
 volumes:
-  pgdata:
+  viber_lounge_database:
