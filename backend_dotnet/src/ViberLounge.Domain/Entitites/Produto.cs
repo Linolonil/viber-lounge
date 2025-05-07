@@ -1,18 +1,34 @@
+using System.ComponentModel.DataAnnotations;
+using ViberLounge.Entities;
+
 namespace ViberLounge.Domain.Entities
 {
-    public class Produto
+    public class Produto : BaseEntity
     {
-        public int Id { get; set; }
-        public string? Nome { get; set; }
-        public decimal Preco { get; set; }
+        [Required]
+        public string? Descricao { get; set; }
+        [Required]
+        public string? DescricaoLonga { get; set; }
+        [Required]
+        public double Preco { get; set; }
+        [Required]
         public string? ImagemUrl { get; set; }
+        [Required]
         public int Quantidade { get; set; }
-        public ProdutoStatus Status { get; set; }
+        [Required]
+        public string? Status { get; set; }
     }
-
-    public enum ProdutoStatus
+    public static class ProdutoStatusExtensions
     {
-        Disponivel,
-        Indisponivel
+        public static ProdutoStatus ToProdutoStatus(this string status)
+        {
+            return status switch
+            {
+                "DISPONIVEL" => ProdutoStatus.DISPONIVEL,
+                "INDISPONIVEL" => ProdutoStatus.INDISPONIVEL,
+                _ => throw new ArgumentException("Status Inválido")
+            };
+        }
     }
+    public enum ProdutoStatus{ DISPONIVEL, INDISPONIVEL}
 }

@@ -1,17 +1,30 @@
+using System.ComponentModel.DataAnnotations;
+using ViberLounge.Entities;
+
 namespace ViberLounge.Domain.Entities
 {
-    public class Usuario
+    public class Usuario : BaseEntity
     {
-        public int Id { get; set; }
+        [Required]
         public string? Nome { get; set; }
+        [Required]
         public string? Email { get; set; }
+        [Required]
         public string? Senha { get; set; }
-        public UsuarioRole Role { get; set; }
+        [Required]
+        public string? Role { get; set; }
     }
-
-    public enum UsuarioRole
+    public static class UsuarioRoleExtensions
     {
-        Admin,
-        User
+        public static UsuarioRole ToUsuarioRole(this string role)
+        {
+            return role switch
+            {
+                "ADMIN" => UsuarioRole.ADMIN,
+                "USER" => UsuarioRole.USER,
+                _ => throw new ArgumentException("Role Inválida")
+            };
+        }
     }
+    public enum UsuarioRole { ADMIN, USER }
 }
