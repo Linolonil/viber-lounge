@@ -10,7 +10,10 @@ const vendaController = new VendaController();
 router.use(authMiddleware);
 
 // Rotas de vendas
+
+//buscar todas as vendas
 router.get('/vendas', (req, res, next) => vendaController.getAll(req, res, next));
+//buscar uma venda por id
 router.get('/vendas/:id', (req, res, next) => vendaController.getById(req, res, next));
 router.post('/vendas', validateVenda, (req, res, next) => vendaController.create(req, res, next));
 router.get('/vendas/data/:date', (req, res, next) => vendaController.getByDate(req, res, next));

@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync, promises } from 'fs';
+import { writeFileSync, existsSync, mkdirSync, promises } from 'fs';
 import { join } from 'path';
-import { Produto } from '../types';
+import { Produto } from '../types/Produto';
 
 export class ProdutoRepository {
   private readonly dataDir: string;
@@ -21,17 +21,17 @@ export class ProdutoRepository {
       writeFileSync(this.filePath, JSON.stringify([]));
     }
   }
-
+//busca todos os produtos do repositorio e retorna um array de produtos
   async findAll(): Promise<Produto[]> {
     const data = await promises.readFile(this.filePath, 'utf-8');
     return JSON.parse(data);
   }
-
+//busca um produto pelo id e retorna um produto
   async findById(id: string): Promise<Produto | undefined> {
     const produtos = await this.findAll();
     return produtos.find(p => p.id === id);
   }
-
+//cria um produto e salva no repositorio se for atualização 
   async save(produto: Produto): Promise<Produto> {
     const produtos = await this.findAll();
     const index = produtos.findIndex(p => p.id === produto.id);

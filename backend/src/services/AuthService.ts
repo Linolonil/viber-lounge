@@ -9,6 +9,7 @@ const DATA_DIR = join(__dirname, '../../data');
 const USERS_FILE = join(DATA_DIR, 'usuarios.json');
 
 export class AuthService {
+  //mano, aqui verifica se existe o arquivo json de usuarios e cria ele se não existir e tambem cria o usuario admin padrão se não existir nenhum usuario, só é chamaddo no getUsers [Linha 32]
   private static initializeDataFile(): void {
     if (!existsSync(DATA_DIR)) {
       mkdirSync(DATA_DIR, { recursive: true });
@@ -27,12 +28,14 @@ export class AuthService {
     }
   }
 
+  //mano, aqui pega o arquivo json de usuarios e retorna o array de usuarios
   private static getUsers(): Usuario[] {
     this.initializeDataFile();
     const data = readFileSync(USERS_FILE, 'utf-8');
     return JSON.parse(data);
   }
 
+  //mano, aqui salva o array de usuarios no arquivo json
   private static saveUsers(users: Usuario[]): void {
     writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
   }

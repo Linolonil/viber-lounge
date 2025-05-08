@@ -5,41 +5,13 @@ import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { Venda, ItemVenda } from '../types/Venda';
 import { AuthRequest } from '../middlewares/authMiddleware';
+import { PeriodoTrabalho, VendasPorUsuario } from '../interfaces/VendaInterface';
+import { DadosGrafico } from '../types/Produto';
 
-interface DadosGrafico {
-  pix: number;
-  credito: number;
-  debito: number;
-  dinheiro: number;
-  totalVendas: number;
-  produtosMaisVendidos: Array<{
-    id: string;
-    nome: string;
-    quantidade: number;
-  }>;
-}
-
-interface VendasPorUsuario {
-  usuarioId: string;
-  usuarioNome: string;
-  totalVendas: number;
-  totalValor: number;
-  vendas: Venda[];
-}
 
 const VENDAS_FILE = join(__dirname, '../../data/vendas.json');
 const PERIODOS_FILE = join(__dirname, '../../data/periodos-trabalho.json');
 
-interface PeriodoTrabalho {
-  id: string;
-  usuarioId: string;
-  usuarioNome: string;
-  dataInicio: string;
-  dataFim?: string;
-  status: 'aberto' | 'fechado';
-  totalVendas: number;
-  totalValor: number;
-}
 
 export class VendaController {
   private vendaService: VendaService;
@@ -398,7 +370,6 @@ export class VendaController {
   }
 
   // cancelar venda
-
   async cancelSale(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const user = req.user;

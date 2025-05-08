@@ -1,16 +1,15 @@
 [
   {
-    "nome": "gin",
-    "preco": 10.5,
-    "quantidade": 20,
-    "imagemUrl": "/api/images/produtos/prod-1745666330862.png",
-    "id": "m9xoywx1uej8jtinofn",
-    "status": "disponivel"
+    "nome": "camisa123",
+    "preco": 12,
+    "quantidade": 12,
+    "imagemUrl": "/api/images/produtos/prod-1746719869722.png",
+    "id": "m9xoywx1uej8jtinofn"
   },
   {
     "nome": "gin 2",
     "preco": 20.5,
-    "quantidade": 1,
+    "quantidade": 0,
     "imagemUrl": "/api/images/produtos/prod-1745666353324.png",
     "id": "m9xoywx1uej8jtinofd",
     "status": "disponivel"

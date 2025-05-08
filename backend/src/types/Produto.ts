@@ -1,4 +1,4 @@
-import { Venda, ItemVenda } from './types/Venda';
+import { Venda, ItemVenda } from './Venda';
 
 export interface Produto {
   id: string;

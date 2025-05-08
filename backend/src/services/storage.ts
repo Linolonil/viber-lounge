@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { Produto } from '../types';
+import { Produto } from '../types/Produto';
 import { Venda } from '../types/Venda';
 
 const DATA_DIR = join(__dirname, '../../data');
