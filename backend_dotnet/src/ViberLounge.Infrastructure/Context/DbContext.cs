@@ -55,7 +55,7 @@ namespace ViberLounge.Infrastructure.Context
                 .HasConversion<string>()
                 .IsRequired();
 
-                b.HasMany(x => x.VendaItems)
+                b.HasMany(x => x.VendaItens)
                 .WithOne(x => x.Produto)
                 .HasForeignKey(x => x.IdProduto)
                 .OnDelete(DeleteBehavior.Restrict);
@@ -115,7 +115,7 @@ namespace ViberLounge.Infrastructure.Context
             // VendaItem ↔ Venda (N:1), VendaItem ↔ Produto (N:1), VendaItem ↔ VendaCancelada (1:1 opcional)
             modelBuilder.Entity<VendaItem>(b =>
             {
-                b.ToTable("VendaItems");
+                b.ToTable("VendaItens");
                 b.HasKey(x => x.Id);
 
                 b.HasOne(x => x.Venda)
@@ -124,7 +124,7 @@ namespace ViberLounge.Infrastructure.Context
                 .OnDelete(DeleteBehavior.Cascade);
 
                 b.HasOne(x => x.Produto)
-                .WithMany(x => x.VendaItems)
+                .WithMany(x => x.VendaItens)
                 .HasForeignKey(x => x.IdProduto)
                 .OnDelete(DeleteBehavior.Restrict);
 

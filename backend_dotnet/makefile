@@ -22,8 +22,11 @@ remove_migration:
 run_migrations:
 	dotnet ef database update --startup-project $(STARTUP_FOLDER) --project $(INFRA_FOLDER)
 
+run_update:
+	dotnet ef database update --startup-project $(STARTUP_FOLDER) --project $(INFRA_FOLDER)
+
 up_dev_db:
-	docker-compose -f docker-compose.yml up -d viber_lounge_database
+	docker compose up -d viber_lounge_database
 
 up_dev_api:
-	docker-compose -f docker-compose.yml up -d viber_lounge_api
+	docker compose -f docker-compose.yml up -d viber_lounge_api

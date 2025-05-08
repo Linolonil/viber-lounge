@@ -18,7 +18,7 @@ services:
   viber_lounge_database:
     image: postgres
     container_name: viber_lounge_database
-    reastart: always,
+    restart: always
     environment:
       POSTGRES_DB: ViberLounge
       POSTGRES_USER: viber
