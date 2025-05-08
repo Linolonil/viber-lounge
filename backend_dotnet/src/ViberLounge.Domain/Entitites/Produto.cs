@@ -17,6 +17,7 @@ namespace ViberLounge.Domain.Entities
         public int Quantidade { get; set; }
         [Required]
         public string? Status { get; set; }
+        public virtual ICollection<VendaItem> VendaItems { get; set; } = new HashSet<VendaItem>();
     }
     public static class ProdutoStatusExtensions
     {

@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using ViberLounge.Entities;
+using System.ComponentModel.DataAnnotations;
 
 namespace ViberLounge.Domain.Entities
 {
@@ -13,6 +13,8 @@ namespace ViberLounge.Domain.Entities
         public string? Senha { get; set; }
         [Required]
         public string? Role { get; set; }
+        public virtual ICollection<Venda> Vendas { get; set; } = new HashSet<Venda>();
+        public virtual ICollection<VendaCancelada> VendasCanceladas { get; set; } = new HashSet<VendaCancelada>();
     }
     public static class UsuarioRoleExtensions
     {
