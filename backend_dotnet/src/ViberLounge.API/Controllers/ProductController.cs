@@ -4,7 +4,7 @@ using ViberLounge.Application.Services.Interfaces;
 namespace ViberLounge.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class ProdutosController : ControllerBase
 {
     private readonly IProdutoService _produtoService;

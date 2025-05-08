@@ -19,10 +19,7 @@ migrate:
 remove_migration:
 	dotnet ef migrations remove --startup-project $(STARTUP_FOLDER) --project $(INFRA_FOLDER)
 
-run_migrations:
-	dotnet ef database update --startup-project $(STARTUP_FOLDER) --project $(INFRA_FOLDER)
-
-run_update:
+update_migration:
 	dotnet ef database update --startup-project $(STARTUP_FOLDER) --project $(INFRA_FOLDER)
 
 up_dev_db:

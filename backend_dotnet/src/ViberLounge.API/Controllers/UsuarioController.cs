@@ -5,7 +5,7 @@ using ViberLounge.Domain.Entities;
 namespace ViberLounge.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -32,15 +32,12 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
         try
         {
-            if (string.IsNullOrWhiteSpace(request.Nome) ||
-                string.IsNullOrWhiteSpace(request.Email) ||
-                string.IsNullOrWhiteSpace(request.Senha))
-            {
-                throw new ArgumentException("Nome, email e senha são obrigatórios.");
-            }
-
             Usuario? newUser = await _authService.RegisterAsync(request);
             
             return StatusCode(201, newUser);
