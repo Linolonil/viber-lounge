@@ -8,6 +8,6 @@ namespace  ViberLounge.Application.Services.Interfaces
         Task<List<UsuarioDto>> GetAllAsync();
         // Task<UsuarioDto> CreateAsync(CriarUsuarioCommand command);
         // Task<UsuarioDto> UpdateAsync(AtualizarUsuarioCommand command);
-        Task DeleteAsync(int id);
+        Task DeleteProductAsync(int id);
     }
 }

@@ -8,6 +8,6 @@ namespace ViberLounge.Application.Interfaces
         Task<ProductDto> GetByIdAsync(int id);
         Task<ProductDto> CreateAsync(ProductDto ProductDto);
         Task UpdateAsync(int id, ProductDto ProductDto);
-        Task DeleteAsync(int id);
+        Task DeleteProductAsync(int id);
     }
 }

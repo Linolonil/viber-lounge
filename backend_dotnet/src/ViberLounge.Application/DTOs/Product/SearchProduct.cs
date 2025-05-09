@@ -9,7 +9,6 @@ namespace ViberLounge.Application.DTOs.Product
         public int? Id { get; set; }
         
         [StringLength(100, ErrorMessage = "A descrição deve ter no máximo 100 caracteres.")]
-        [RegularExpression(@"^[a-zA-Z0-9\s]+$", ErrorMessage = "A descrição só pode conter letras, números e espaços.")]
         public string? Descricao { get; set; }
     }
 }
