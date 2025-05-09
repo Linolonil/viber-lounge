@@ -16,8 +16,8 @@ namespace ViberLounge.Infrastructure.Repositories
         
         public async Task<Usuario?> IsEmailExists(string email)
         {
-            Usuario? Usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
-            return Usuario;
+            Usuario? usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
+            return usuario;
         }
         public async Task AddUserAsync(Usuario Usuario)
         {

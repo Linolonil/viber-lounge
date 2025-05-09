@@ -46,5 +46,18 @@ namespace ViberLounge.Infrastructure.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<Produto?> IsProductExists(string descricao)
+        {
+            Produto? produto = await _context.Produtos.FirstOrDefaultAsync(p => p.Descricao == descricao);
+            return produto;
+        }
+
+        public async Task<Produto?> CreateProductAsync(Produto produto)
+        {
+            await _context.Produtos.AddAsync(produto);
+            await _context.SaveChangesAsync();
+            return produto;
+        }
     }
 }

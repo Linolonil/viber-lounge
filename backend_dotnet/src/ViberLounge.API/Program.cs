@@ -8,6 +8,7 @@ using ViberLounge.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ViberLounge.Infrastructure.Repositories.Interfaces;
+using ViberLounge.Application.Services.Interfaces;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,11 +59,13 @@ void configDependencyInjection(WebApplicationBuilder builder)
 
 void configDependencyService(IServiceCollection services){
     builder.Services.AddScoped<IAuthService, AuthService>();
+    builder.Services.AddScoped<IProdutoService, ProdutoService>();
 }
 
 void configDependencyRepository(IServiceCollection services)
 {
     builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+    builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
 }
 
 var app = builder.Build();

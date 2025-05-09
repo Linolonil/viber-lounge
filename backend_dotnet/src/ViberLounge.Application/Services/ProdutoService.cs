@@ -1,49 +1,26 @@
 using MediatR;
-using ViberLounge.API.Controllers;
+using ViberLounge.Application.DTOs.Product;
 using ViberLounge.Application.Services.Interfaces;
+using ViberLounge.Domain.Entities;
+using ViberLounge.Infrastructure.Repositories.Interfaces;
 
 namespace ViberLounge.Application.Services
 {
     public class ProdutoService : IProdutoService
     {
-        private readonly IMediator _mediator;
+        private readonly IProdutoRepository _produtoRepository;
 
-        public ProdutoService(IMediator mediator)
+        public ProdutoService(IProdutoRepository produtoRepository)
         {
-            _mediator = mediator;
+            _produtoRepository = produtoRepository;
         }
 
-        // public async Task<ProdutoDto> GetByIdAsync(int id)
-        // {
-        //     return await _mediator.Send(new GetProdutoByIdQuery { Id = id });
-        // }
-
-        // public async Task<List<ProdutoDto>> GetAllAsync()
-        // {
-        //     return await _mediator.Send(new GetAllProdutosQuery());
-        // }
-
-        // public async Task<ProdutoDto> CreateAsync(CriarProdutoCommand command)
-        // {
-        //     return await _mediator.Send(command);
-        // }
-
-        // public async Task<ProdutoDto> UpdateAsync(AtualizarProdutoCommand command)
-        // {
-        //     return await _mediator.Send(command);
-        // }
-
-        // public async Task DeleteAsync(int id)
-        // {
-        //     await _mediator.Send(new DeletarProdutoCommand { Id = id });
-        // }
-
-        Task<ProdutoDto> IProdutoService.GetByIdAsync(int id)
+        Task<ProductDto> IProdutoService.GetByIdAsync(int id)
         {
             throw new NotImplementedException();
         }
 
-        Task<List<ProdutoDto>> IProdutoService.GetAllAsync()
+        Task<List<ProductDto>> IProdutoService.GetAllAsync()
         {
             throw new NotImplementedException();
         }
@@ -51,6 +28,37 @@ namespace ViberLounge.Application.Services
         public Task DeleteAsync(int id)
         {
             throw new NotImplementedException();
+        }
+
+        public Task<ProductDto> GetByIdAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<ProductDto>> GetAllAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<Produto?> CreateProductAsync(ProductDto product)
+        {
+            var produtoExist = await _produtoRepository.IsProductExists(product.Descricao!);
+            if(produtoExist != null)
+            {
+                throw new Exception("Produto já existe");
+            }
+
+            Produto produto = new (){
+                Descricao = product.Descricao,
+                DescricaoLonga = product.DescricaoLonga,
+                Preco = product.Preco,
+                ImagemUrl = product.ImagemUrl,
+                Quantidade = product.Quantidade,
+                Status = ProdutoStatusExtensions.ToProdutoStatus(product.Quantidade)
+            };
+            
+            var produtoCriado = await _produtoRepository.CreateProductAsync(produto);
+            return produtoCriado;
         }
     }
 }

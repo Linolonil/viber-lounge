@@ -1,6 +1,7 @@
 using AutoMapper;
 using ViberLounge.API.Controllers;
 using ViberLounge.Domain.Entities;
+using ViberLounge.Application.DTOs.Product;
 
 namespace ViberLounge.Application.Mapping
 {
@@ -8,7 +9,7 @@ namespace ViberLounge.Application.Mapping
     {
         public MappingProfile()
         {
-            CreateMap<Produto, ProdutoDto>();
+            CreateMap<Produto, ProductDto>();
             // CreateMap<CriarProdutoCommand, Produto>();
             // CreateMap<AtualizarProdutoCommand, Produto>();
             CreateMap<Venda, VendaDto>();

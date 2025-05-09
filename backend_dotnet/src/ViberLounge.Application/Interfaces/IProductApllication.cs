@@ -1,13 +1,13 @@
-using ViberLounge.API.Controllers;
+using ViberLounge.Application.DTOs.Product;
 
 namespace ViberLounge.Application.Interfaces
 {
     public interface IProductApplication
     {
-        Task<IEnumerable<ProdutoDto>> GetAllAsync();
-        Task<ProdutoDto> GetByIdAsync(int id);
-        Task<ProdutoDto> CreateAsync(ProdutoDto produtoDto);
-        Task UpdateAsync(int id, ProdutoDto produtoDto);
+        Task<IEnumerable<ProductDto>> GetAllAsync();
+        Task<ProductDto> GetByIdAsync(int id);
+        Task<ProductDto> CreateAsync(ProductDto ProductDto);
+        Task UpdateAsync(int id, ProductDto ProductDto);
         Task DeleteAsync(int id);
     }
 }

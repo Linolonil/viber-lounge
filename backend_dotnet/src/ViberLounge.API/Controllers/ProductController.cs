@@ -1,38 +1,46 @@
 using Microsoft.AspNetCore.Mvc;
+using ViberLounge.Application.DTOs.Product;
 using ViberLounge.Application.Services.Interfaces;
+using ViberLounge.Domain.Entities;
 
 namespace ViberLounge.API.Controllers;
 
-[ApiController]
-[Route("[controller]")]
-public class ProdutosController : ControllerBase
+[Route("product")]
+public class ProductController : ControllerBase
 {
     private readonly IProdutoService _produtoService;
 
-    public ProdutosController(IProdutoService produtoService)
+    public ProductController(IProdutoService produtoService)
     {
         _produtoService = produtoService;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<ProdutoDto>>> GetAll()
+    [ValidateModel]
+    public async Task<ActionResult<List<ProductDto>>> GetAll()
     {
         var produtos = await _produtoService.GetAllAsync();
         return Ok(produtos);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProdutoDto>> GetById(int id)
+    [ValidateModel]
+    public async Task<ActionResult<ProductDto>> GetById(int id)
     {
         var produto = await _produtoService.GetByIdAsync(id);
         if (produto == null) return NotFound();
         return Ok(produto);
     }
 
-    // [HttpPost]
-    // public async Task<ActionResult<ProdutoDto>> Create(CriarProdutoCommand command)
-    // {
-    //     var produto = await _produtoService.CreateAsync(command);
-    //     return CreatedAtAction(nameof(GetById), new { id = produto.Id }, produto);
-    // }
+    [HttpPost]
+    [ValidateModel]
+    public async Task<ActionResult<ProductDto>> Create(ProductDto product)
+    {
+        Produto? produto = await _produtoService.CreateProductAsync(product);
+        if (produto == null)
+        {
+            return BadRequest("Produto não criado");
+        }
+        return Ok("Produto criado com sucesso");
+    }
 }
