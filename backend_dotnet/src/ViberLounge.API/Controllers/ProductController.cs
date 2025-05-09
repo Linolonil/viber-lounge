@@ -16,6 +16,8 @@ public class ProductController : ControllerBase
 
     [HttpGet]
     [ValidateModel]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<List<ProductDto>>> GetAll()
     {
         try
@@ -31,6 +33,9 @@ public class ProductController : ControllerBase
 
     [HttpGet("search")]
     [ValidateModel]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IEnumerable<ProductDto>>> SearchT([FromQuery] SearchProductDto searchTerm)
     {
         try
@@ -49,13 +54,57 @@ public class ProductController : ControllerBase
     }
     [HttpPost("create")]
     [ValidateModel]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> Create([FromBody] CreateProductDto product)
     {
-        ProductDto? produto = await _produtoService.CreateProductAsync(product);
-        if (produto == null)
+        try{
+            ProductDto? produto = await _produtoService.CreateProductAsync(product);
+            return Created(string.Empty, produto);
+        }catch(Exception ex)
         {
-            return BadRequest("Produto não criado");
+            return BadRequest(ex.Message);
         }
-        return Created(string.Empty, produto);
+    }
+
+    [HttpPut("update")]
+    [ValidateModel]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> Update([FromBody] UpdateProductDto product)
+    {
+        try
+        {
+            var updatedProduct = await _produtoService.UpdateProductAsync(product);
+            return Ok(updatedProduct);
+        }
+        catch (Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
+    [HttpDelete("delete")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> Delete([FromQuery] int id)
+    {
+        try
+        {
+            if (id <= 0)
+                return BadRequest("ID inválido.");
+
+            bool result = await _produtoService.DeleteProductAsync(id);
+
+            if (!result)
+                return NotFound($"Produto com ID {id} não encontrado.");
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }
