@@ -14,15 +14,9 @@ namespace ViberLounge.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<Produto> GetByIdAsync(int id)
+        public async Task<IEnumerable<Produto>> GetAllProductAsync()
         {
-            var produto = await _context.Produtos.FindAsync(id) ?? throw new KeyNotFoundException($"Produto with ID {id} not found.");
-            return produto;
-        }
-
-        public async Task<IEnumerable<Produto>> GetAllProductRepositoryAsync()
-        {
-            return await _context.Produtos.ToListAsync();
+            return await _context.Produtos.Where(p => !p.IsDeleted).ToListAsync();
         }
 
         public async Task AddAsync(Produto produto)
@@ -31,25 +25,70 @@ namespace ViberLounge.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(Produto produto)
+        public async Task<Produto> UpdateProductAsync(Produto produto)
         {
-            _context.Produtos.Update(produto);
+            var existingEntity = await _context.Produtos.FindAsync(produto.Id);
+            
+            if (existingEntity != null)
+            {
+                _context.Entry(existingEntity).State = EntityState.Detached;
+            }
+
+            produto.UpdatedAt = DateTime.UtcNow;
+            _context.Entry(produto).State = EntityState.Modified;
             await _context.SaveChangesAsync();
+            
+            return await _context.Produtos
+                .AsNoTracking()
+                .Select(p => new Produto
+                {
+                    Id = p.Id,
+                    Descricao = p.Descricao,
+                    DescricaoLonga = p.DescricaoLonga,
+                    Preco = p.Preco,
+                    ImagemUrl = p.ImagemUrl,
+                    Quantidade = p.Quantidade,
+                    Status = p.Status,
+                    CreatedAt = p.CreatedAt,
+                    UpdatedAt = p.UpdatedAt,
+                    IsDeleted = p.IsDeleted
+                })
+                .FirstOrDefaultAsync(p => p.Id == produto.Id) ?? produto;
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task<Produto> DeleteProductAsync(Produto produto)
         {
-            var produto = await GetByIdAsync(id);
-            if (produto != null)
-            {
-                _context.Produtos.Remove(produto);
-                await _context.SaveChangesAsync();
-            }
+            produto.IsDeleted = true;
+            
+            _context.Entry(produto).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            
+            return await _context.Produtos
+                .AsNoTracking()
+                .Select(p => new Produto
+                {
+                    Id = p.Id,
+                    Descricao = p.Descricao,
+                    DescricaoLonga = p.DescricaoLonga,
+                    Preco = p.Preco,
+                    ImagemUrl = p.ImagemUrl,
+                    Quantidade = p.Quantidade,
+                    Status = p.Status,
+                    CreatedAt = p.CreatedAt,
+                    UpdatedAt = p.UpdatedAt,
+                    IsDeleted = p.IsDeleted
+                })
+                .FirstOrDefaultAsync(p => p.Id == produto.Id) ?? produto;
         }
 
         public async Task<Produto?> IsProductExists(string descricao)
         {
-            return await _context.Produtos.FirstOrDefaultAsync(p => p.Descricao == descricao);
+            var descNorm = descricao.Trim().ToLowerInvariant();
+
+            return await _context.Produtos
+                .FirstOrDefaultAsync(p => 
+                    !p.IsDeleted && 
+                    p.Descricao!.Trim().ToLower() == descNorm);
         }
 
         public async Task<Produto?> CreateProductAsync(Produto produto)
@@ -61,14 +100,35 @@ namespace ViberLounge.Infrastructure.Repositories
 
         public Task<Produto?> GetProductByIdAsync(int id)
         {
-            return _context.Produtos.FindAsync(id).AsTask();
+            return _context.Produtos.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
         }
 
         public Task<List<Produto>> GetProductsByDescriptionAsync(string descricao)
         {
+            var termo = descricao.Trim().ToLowerInvariant();
+
             return _context.Produtos
-               .Where(p => p.Descricao!.Contains(descricao))
-               .ToListAsync();
+                .Where(p => 
+                    !p.IsDeleted &&
+                    p.Descricao != null &&
+                    p.Descricao.Trim().ToLower().Contains(termo))
+                .ToListAsync();
+        }
+
+        public async Task<Produto> RestoreProductAsync(int id)
+        {
+            var produto = await _context.Produtos
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(p => p.Id == id && p.IsDeleted);
+                
+            if (produto == null)
+                throw new KeyNotFoundException($"Produto excluído com ID {id} não encontrado.");
+                
+            produto.IsDeleted = false;
+            _context.Entry(produto).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            
+            return produto;
         }
     }
 }
