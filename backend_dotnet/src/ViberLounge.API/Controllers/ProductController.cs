@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ViberLounge.Application.DTOs.Product;
 using ViberLounge.Application.Services.Interfaces;
-using ViberLounge.Domain.Entities;
 
 namespace ViberLounge.API.Controllers;
 
@@ -19,28 +18,44 @@ public class ProductController : ControllerBase
     [ValidateModel]
     public async Task<ActionResult<List<ProductDto>>> GetAll()
     {
-        var produtos = await _produtoService.GetAllAsync();
-        return Ok(produtos);
+        try
+        {
+            var produtos = await _produtoService.GetAllProductAsync();
+            return Ok(produtos);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("search")]
     [ValidateModel]
-    public async Task<ActionResult<ProductDto>> GetById(int id)
+    public async Task<ActionResult<IEnumerable<ProductDto>>> SearchT([FromQuery] SearchProductDto searchTerm)
     {
-        var produto = await _produtoService.GetByIdAsync(id);
-        if (produto == null) return NotFound();
-        return Ok(produto);
-    }
+        try
+        {
+            var produto = await _produtoService.GetProductsByTermAsync(searchTerm);
+            if (!produto.Any()) 
+                return NoContent();
+                
+            return Ok(produto);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
 
-    [HttpPost]
+    }
+    [HttpPost("create")]
     [ValidateModel]
-    public async Task<ActionResult<ProductDto>> Create(ProductDto product)
+    public async Task<ActionResult> Create([FromBody] CreateProductDto product)
     {
-        Produto? produto = await _produtoService.CreateProductAsync(product);
+        ProductDto? produto = await _produtoService.CreateProductAsync(product);
         if (produto == null)
         {
             return BadRequest("Produto não criado");
         }
-        return Ok("Produto criado com sucesso");
+        return Created(string.Empty, produto);
     }
 }

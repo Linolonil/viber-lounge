@@ -1,28 +1,56 @@
-using MediatR;
+using AutoMapper;
+using ViberLounge.Domain.Entities;
 using ViberLounge.Application.DTOs.Product;
 using ViberLounge.Application.Services.Interfaces;
-using ViberLounge.Domain.Entities;
 using ViberLounge.Infrastructure.Repositories.Interfaces;
 
 namespace ViberLounge.Application.Services
 {
     public class ProdutoService : IProdutoService
     {
+        private readonly IMapper _mapper;
         private readonly IProdutoRepository _produtoRepository;
 
-        public ProdutoService(IProdutoRepository produtoRepository)
+        public ProdutoService(IProdutoRepository produtoRepository, IMapper mapper)
         {
+            _mapper = mapper;
             _produtoRepository = produtoRepository;
         }
 
-        Task<ProductDto> IProdutoService.GetByIdAsync(int id)
+        public async Task<IEnumerable<ProductDto>> GetProductsByTermAsync(SearchProductDto term)
         {
-            throw new NotImplementedException();
+            if (term == null)
+                throw new ArgumentNullException(nameof(term));
+
+            bool hasId  = term.Id.HasValue;
+            bool hasDesc = !string.IsNullOrWhiteSpace(term.Descricao);
+
+            if (!hasId && !hasDesc)
+                throw new ArgumentException("Informe Id ou Descrição para buscar.");
+
+            if (hasId)
+            {
+                var entity = await _produtoRepository.GetProductByIdAsync(term.Id!.Value);
+                if (entity == null)
+                    return Enumerable.Empty<ProductDto>();
+
+                return [_mapper.Map<ProductDto>(entity)];
+            }
+            else
+            {
+                var list = await _produtoRepository.GetProductsByDescriptionAsync(term.Descricao!);
+                return list.Select(e => _mapper.Map<ProductDto>(e));
+            }
         }
 
-        Task<List<ProductDto>> IProdutoService.GetAllAsync()
+        public async Task<List<ProductDto>> GetAllProductAsync()
         {
-            throw new NotImplementedException();
+            var produtos = await _produtoRepository.GetAllProductRepositoryAsync();
+            if (produtos == null || !produtos.Any())
+            {
+                throw new Exception("Nenhum produto encontrado");
+            }
+            return _mapper.Map<List<ProductDto>>(produtos);
         }
 
         public Task DeleteAsync(int id)
@@ -30,17 +58,17 @@ namespace ViberLounge.Application.Services
             throw new NotImplementedException();
         }
 
-        public Task<ProductDto> GetByIdAsync(int id)
+        public Task<CreateProductDto> GetByIdAsync(int id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<List<ProductDto>> GetAllAsync()
+        public Task<List<CreateProductDto>> GetAllAsync()
         {
             throw new NotImplementedException();
         }
 
-        public async Task<Produto?> CreateProductAsync(ProductDto product)
+        public async Task<ProductDto?> CreateProductAsync(CreateProductDto product)
         {
             var produtoExist = await _produtoRepository.IsProductExists(product.Descricao!);
             if(produtoExist != null)
@@ -51,14 +79,14 @@ namespace ViberLounge.Application.Services
             Produto produto = new (){
                 Descricao = product.Descricao,
                 DescricaoLonga = product.DescricaoLonga,
-                Preco = product.Preco,
+                Preco = Convert.ToDouble(product.Preco),
                 ImagemUrl = product.ImagemUrl,
                 Quantidade = product.Quantidade,
                 Status = ProdutoStatusExtensions.ToProdutoStatus(product.Quantidade)
             };
             
-            var produtoCriado = await _produtoRepository.CreateProductAsync(produto);
-            return produtoCriado;
+            Produto? produtoCriado = await _produtoRepository.CreateProductAsync(produto);
+            return _mapper.Map<ProductDto>(produtoCriado);
         }
     }
 }

@@ -20,7 +20,7 @@ namespace ViberLounge.Infrastructure.Repositories
             return produto;
         }
 
-        public async Task<IEnumerable<Produto>> GetAllAsync()
+        public async Task<IEnumerable<Produto>> GetAllProductRepositoryAsync()
         {
             return await _context.Produtos.ToListAsync();
         }
@@ -49,8 +49,7 @@ namespace ViberLounge.Infrastructure.Repositories
 
         public async Task<Produto?> IsProductExists(string descricao)
         {
-            Produto? produto = await _context.Produtos.FirstOrDefaultAsync(p => p.Descricao == descricao);
-            return produto;
+            return await _context.Produtos.FirstOrDefaultAsync(p => p.Descricao == descricao);
         }
 
         public async Task<Produto?> CreateProductAsync(Produto produto)
@@ -58,6 +57,18 @@ namespace ViberLounge.Infrastructure.Repositories
             await _context.Produtos.AddAsync(produto);
             await _context.SaveChangesAsync();
             return produto;
+        }
+
+        public Task<Produto?> GetProductByIdAsync(int id)
+        {
+            return _context.Produtos.FindAsync(id).AsTask();
+        }
+
+        public Task<List<Produto>> GetProductsByDescriptionAsync(string descricao)
+        {
+            return _context.Produtos
+               .Where(p => p.Descricao!.Contains(descricao))
+               .ToListAsync();
         }
     }
 }
