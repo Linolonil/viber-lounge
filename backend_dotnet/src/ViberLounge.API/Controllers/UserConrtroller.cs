@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ViberLounge.API.Controllers;
 
-[Route("user")]
-public class UserController : ControllerBase
+[Route("auth")]
+public class AuthProfileController : ControllerBase
 {
     [HttpGet("profile")]
     [Authorize]

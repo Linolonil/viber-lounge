@@ -4,7 +4,7 @@ using ViberLounge.Domain.Entities;
 
 namespace ViberLounge.API.Controllers;
 
-[Route("autentication")]
+[Route("auth")]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
