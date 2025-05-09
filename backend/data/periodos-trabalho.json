@@ -8,5 +8,14 @@
     "totalVendas": 1,
     "totalValor": 20.5,
     "dataFim": "2025-04-26T12:13:36.881Z"
+  },
+  {
+    "id": "vfl0yph4a",
+    "usuarioId": "5cmpzwhr0",
+    "usuarioNome": "claudio",
+    "dataInicio": "2025-05-09T15:57:07.537Z",
+    "status": "aberto",
+    "totalVendas": 0,
+    "totalValor": 0
   }
 ]
