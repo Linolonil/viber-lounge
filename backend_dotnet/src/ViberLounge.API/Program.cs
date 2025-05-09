@@ -2,6 +2,7 @@ using System.Text;
 using HealthChecks.UI.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using ViberLounge.Application.Mapping;
 using ViberLounge.Application.Services;
 using ViberLounge.Infrastructure.Context;
 using ViberLounge.Infrastructure.Repositories;
@@ -16,11 +17,12 @@ string ENVIRONMENT = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"
 string connectionsStrings = ENVIRONMENT == "Development" ? "ConnectionStrings:DefaultConnection" : "ConnectionStrings:ProductionConnection";
 
 // Add services to the container.
-builder.Services.AddAuthorization();
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
+builder.Services.AddAuthorization();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 configDataBase(builder);
 configDependencyInjection(builder);
 
