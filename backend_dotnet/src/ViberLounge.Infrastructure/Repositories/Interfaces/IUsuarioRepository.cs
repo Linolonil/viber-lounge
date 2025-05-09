@@ -4,10 +4,10 @@ namespace ViberLounge.Infrastructure.Repositories.Interfaces
 {
     public interface IUsuarioRepository
     {
+        Task<Usuario?> IsEmailExists(string email);
+        Task AddUserAsync(Usuario Usuario);
         Task<Usuario> GetByIdAsync(int id);
-        Task<Usuario> GetByEmailAsync(string email);
-        Task<bool> CheckPasswordAsync(Usuario user, string senha);
-        Task AddAsync(Usuario Usuario);
+        Task<bool> CheckPasswordAsync(string senhaHash, string senha);
         Task UpdateAsync(Usuario Usuario);
     }
 }

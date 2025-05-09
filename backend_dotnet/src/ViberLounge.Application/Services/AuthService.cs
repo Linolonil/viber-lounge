@@ -22,30 +22,11 @@ namespace ViberLounge.Application.Services
             _configuration = configuration;
         }
 
-        public async Task<LoginResponse> LoginAsync(LoginRequest request)
-        {
-            var user = await _userRepository.GetByEmailAsync(request.Email!);
-            if (user == null || !await _userRepository.CheckPasswordAsync(user, request.Senha!))
-            {
-                throw new UnauthorizedAccessException("Email ou senha inválidos.");
-            }
-
-            var token = GenerateToken(user);
-
-            var userDto = new UsuarioDto
-            {
-                Email = user.Email,
-                Nome = user.Nome
-            };
-
-            return new LoginResponse { User = userDto, Token = token };
-        }
-
         public async Task<Usuario> RegisterAsync(RegisterRequest request)
         {
             try
             {
-                var existingUser = await _userRepository.GetByEmailAsync(request.Email!);
+                var existingUser = await _userRepository.IsEmailExists(request.Email!);
                 if (existingUser != null)
                     throw new InvalidOperationException("Já existe um usuário com este email.");
             }
@@ -62,21 +43,44 @@ namespace ViberLounge.Application.Services
                 Email = request.Email,
                 Senha = senhaHash,
                 Role = "USER", 
-                // Role = UsuarioRoleExtensions.ToUsuarioRole(request.Role).ToString(),
             };
 
-            await _userRepository.AddAsync(novoUsuario);
+            await _userRepository.AddUserAsync(novoUsuario);
 
             return novoUsuario;
         }
+        public async Task<LoginResponse> LoginAsync(LoginRequest request)
+        {
+            Usuario? user = await _userRepository.IsEmailExists(request.Email!);
+            if (user == null || !await _userRepository.CheckPasswordAsync(user.Senha!, request.Senha!))
+            {
+                throw new UnauthorizedAccessException("Email ou senha inválidos.");
+            }
+
+            var token = GenerateToken(user);
+
+            var userDto = new UsuarioDto
+            {
+                Id = user.Id,
+                Email = user.Email,
+                Nome = user.Nome,
+                Role = user.Role
+            };
+
+            return new LoginResponse { User = userDto, Token = token };
+        }
+
 
         private string GenerateToken(Usuario user)
         {
             var claims = new[]
             {
+                new Claim("id", user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email!),
-                new Claim(ClaimTypes.Name, user.Nome!)
+                new Claim(ClaimTypes.Name, user.Nome!),
+                new Claim("email", user.Email!),
+                new Claim("role", user.Role ?? "USER")
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));

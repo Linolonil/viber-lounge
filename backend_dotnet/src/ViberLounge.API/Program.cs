@@ -1,10 +1,14 @@
+using System.Text;
 using HealthChecks.UI.Client;
 using Microsoft.EntityFrameworkCore;
-using ViberLounge.Infrastructure.Context;
+using Microsoft.IdentityModel.Tokens;
 using ViberLounge.Application.Services;
+using ViberLounge.Infrastructure.Context;
 using ViberLounge.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ViberLounge.Infrastructure.Repositories.Interfaces;
+
 
 var builder = WebApplication.CreateBuilder(args);
 string ENVIRONMENT = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
@@ -16,15 +20,26 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
-builder.Services.AddScoped<IAuthService, AuthService>();
 configDataBase(builder);
 configDependencyInjection(builder);
-var app = builder.Build();
 
-// await using (var scope = app.Services.CreateAsyncScope())
-// {
-//     await scope.ServiceProvider.InitializeDatabaseAsync();
-// }
+// Autenticação JWT
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured.")))
+        };
+    }
+);
+
 void configDataBase(WebApplicationBuilder serviceProvider)
 {
     builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(
@@ -33,8 +48,10 @@ void configDataBase(WebApplicationBuilder serviceProvider)
     ));
 }
 
+
 void configDependencyInjection(WebApplicationBuilder builder)
 {
+    builder.Services.AddScoped<ValidateModelAttribute>();
     configDependencyService(builder.Services);
     configDependencyRepository(builder.Services);
 }
@@ -47,6 +64,9 @@ void configDependencyRepository(IServiceCollection services)
 {
     builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 }
+
+var app = builder.Build();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
