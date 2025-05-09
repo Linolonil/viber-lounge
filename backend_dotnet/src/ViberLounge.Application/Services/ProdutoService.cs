@@ -45,27 +45,12 @@ namespace ViberLounge.Application.Services
 
         public async Task<List<ProductDto>> GetAllProductAsync()
         {
-            var produtos = await _produtoRepository.GetAllProductRepositoryAsync();
+            var produtos = await _produtoRepository.GetAllProductAsync();
             if (produtos == null || !produtos.Any())
             {
-                throw new Exception("Nenhum produto encontrado");
+                throw new Exception("Não há produtos cadastrados");
             }
             return _mapper.Map<List<ProductDto>>(produtos);
-        }
-
-        public Task DeleteAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<CreateProductDto> GetByIdAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<List<CreateProductDto>> GetAllAsync()
-        {
-            throw new NotImplementedException();
         }
 
         public async Task<ProductDto?> CreateProductAsync(CreateProductDto product)
@@ -87,6 +72,33 @@ namespace ViberLounge.Application.Services
             
             Produto? produtoCriado = await _produtoRepository.CreateProductAsync(produto);
             return _mapper.Map<ProductDto>(produtoCriado);
+        }
+        
+        public async Task<Produto> UpdateProductAsync(UpdateProductDto product)
+        {
+            var productExist = await _produtoRepository.GetProductByIdAsync(product.Id);
+            if (productExist == null)
+                throw new Exception($"Produto com ID {product.Id} não encontrado.");
+                
+            productExist.Descricao = product.Descricao;
+            productExist.DescricaoLonga = product.DescricaoLonga;
+            productExist.Preco = Convert.ToDouble(product.Preco);
+            productExist.ImagemUrl = product.ImagemUrl;
+            productExist.Quantidade = product.Quantidade;
+            productExist.Status = ProdutoStatusExtensions.ToProdutoStatus(product.Quantidade);
+            
+            var updatedProduct = await _produtoRepository.UpdateProductAsync(productExist);
+            return updatedProduct;
+        }
+        public async Task<bool> DeleteProductAsync(int id)
+        {
+            var productExist = await _produtoRepository.GetProductByIdAsync(id);
+            if (productExist == null)
+            {
+                return false;
+            }
+            await _produtoRepository.DeleteProductAsync(productExist);
+            return true;
         }
     }
 }
