@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViberLounge.Application.DTOs.Product;
 using ViberLounge.Application.Services.Interfaces;
@@ -5,6 +6,7 @@ using ViberLounge.Application.Services.Interfaces;
 namespace ViberLounge.API.Controllers;
 
 [Route("product")]
+[Authorize]
 public class ProductController : ControllerBase
 {
     private readonly IProdutoService _produtoService;
@@ -18,11 +20,11 @@ public class ProductController : ControllerBase
     [ValidateModel]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<List<ProductDto>>> GetAll()
+    public async Task<ActionResult<List<ProductDto>>> GetAll(bool includeDeleted = false)
     {
         try
         {
-            var produtos = await _produtoService.GetAllProductAsync();
+            var produtos = await _produtoService.GetAllProductAsync(includeDeleted);
             return Ok(produtos);
         }
         catch (Exception ex)

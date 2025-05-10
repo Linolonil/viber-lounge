@@ -1,19 +1,22 @@
-using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ViberLounge.API.Controllers;
 
 [Route("auth")]
+[Authorize]
 public class AuthProfileController : ControllerBase
 {
     [HttpGet("profile")]
-    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public IActionResult Profile()
     {
-        string? userId = GetClaim("id");
+        string? userId = User.FindFirst("id")?.Value;;
         string? nome = User.Identity?.Name;
-        string? email = GetClaim("email");
-        string? role = GetClaim("role");
+        string? email = User.FindFirst(ClaimTypes.Email)?.Value;
+        string? role = User.FindFirst(ClaimTypes.Role)?.Value;
 
         if (userId == null || nome == null || email == null || role == null)
             return Unauthorized(new { message = "Token inválido ou informações do usuário ausentes." });
@@ -27,10 +30,5 @@ public class AuthProfileController : ControllerBase
         };
 
         return Ok(profile);
-    }
-
-    private string? GetClaim(string type)
-    {
-        return User.FindFirst(type)?.Value ?? User.FindFirst($"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/{type}")?.Value;
     }
 }

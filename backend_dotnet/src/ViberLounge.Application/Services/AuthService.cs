@@ -41,8 +41,7 @@ namespace ViberLounge.Application.Services
             {
                 Nome = request.Nome,
                 Email = request.Email,
-                Senha = senhaHash,
-                Role = "USER", 
+                Senha = senhaHash
             };
 
             await _userRepository.AddUserAsync(novoUsuario);
@@ -79,8 +78,8 @@ namespace ViberLounge.Application.Services
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email!),
                 new Claim(ClaimTypes.Name, user.Nome!),
-                new Claim("email", user.Email!),
-                new Claim("role", user.Role ?? "USER")
+                new Claim(ClaimTypes.Email, user.Email!),
+                new Claim(ClaimTypes.Role, user.Role ?? "USER")
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
