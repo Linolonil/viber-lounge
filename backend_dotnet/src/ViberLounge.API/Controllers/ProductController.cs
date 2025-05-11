@@ -5,8 +5,9 @@ using ViberLounge.Application.Services.Interfaces;
 
 namespace ViberLounge.API.Controllers;
 
-[Route("product")]
 [Authorize]
+[ApiController]
+[Route("product")]
 public class ProductController : ControllerBase
 {
     private readonly IProdutoService _produtoService;
@@ -17,7 +18,6 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet]
-    [ValidateModel]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<List<ProductDto>>> GetAll(bool includeDeleted = false)
@@ -34,7 +34,6 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet("search")]
-    [ValidateModel]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -55,7 +54,6 @@ public class ProductController : ControllerBase
 
     }
     [HttpPost("create")]
-    [ValidateModel]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> Create([FromBody] CreateProductDto product)
@@ -70,7 +68,6 @@ public class ProductController : ControllerBase
     }
 
     [HttpPut("update")]
-    [ValidateModel]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Update([FromBody] UpdateProductDto product)

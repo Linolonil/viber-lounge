@@ -1,11 +1,13 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using ViberLounge.Application.DTOs.User;
 using Microsoft.AspNetCore.Authorization;
 
 namespace ViberLounge.API.Controllers;
 
-[Route("auth")]
 [Authorize]
+[ApiController]
+[Route("auth")]
 public class AuthProfileController : ControllerBase
 {
     [HttpGet("profile")]

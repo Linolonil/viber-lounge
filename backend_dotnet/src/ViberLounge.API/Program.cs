@@ -1,5 +1,6 @@
 using System.Text;
 using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -22,6 +23,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+configModelError(builder.Services);
 configSwagger(builder);
 configDataBase(builder);
 configJwtAuthentication(builder);
@@ -104,6 +106,7 @@ void configDependencyInjection(WebApplicationBuilder builder)
 void configDependencyService(IServiceCollection services){
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<IProdutoService, ProdutoService>();
+    builder.Services.AddScoped<IVendaService, VendaService>();
 }
 
 // Configuração dos repositórios
@@ -111,6 +114,24 @@ void configDependencyRepository(IServiceCollection services)
 {
     builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
     builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
+    builder.Services.AddScoped<IVendaRepository, VendaRepository>();
+}
+
+
+void configModelError(IServiceCollection services)
+{
+    builder.Services.Configure<ApiBehaviorOptions>(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .SelectMany(ms => ms.Value!.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+
+            return new BadRequestObjectResult(new { message = string.Join(" ", errors) });
+        };
+    });
 }
 
 var app = builder.Build();
