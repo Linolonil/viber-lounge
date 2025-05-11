@@ -43,9 +43,9 @@ namespace ViberLounge.Application.Services
             }
         }
 
-        public async Task<List<ProductDto>> GetAllProductAsync()
+        public async Task<List<ProductDto>> GetAllProductAsync(bool includeDeleted = false)
         {
-            var produtos = await _produtoRepository.GetAllProductAsync();
+            var produtos = await _produtoRepository.GetAllProductAsync(includeDeleted);
             if (produtos == null || !produtos.Any())
             {
                 throw new Exception("Não há produtos cadastrados");

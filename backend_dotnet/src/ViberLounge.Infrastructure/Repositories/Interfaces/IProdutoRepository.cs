@@ -4,9 +4,9 @@ namespace ViberLounge.Infrastructure.Repositories.Interfaces
 {
     public interface IProdutoRepository
     {
+        Task<IEnumerable<Produto>> GetAllProductAsync(bool includeDeleted = false);
         Task<Produto?> IsProductExists(string descricao);
         Task<Produto?> CreateProductAsync(Produto produto);
-        Task<IEnumerable<Produto>> GetAllProductAsync();
         Task<Produto?> GetProductByIdAsync(int id);
         Task<List<Produto>> GetProductsByDescriptionAsync(string descricao);
         Task<Produto> UpdateProductAsync(Produto produto);

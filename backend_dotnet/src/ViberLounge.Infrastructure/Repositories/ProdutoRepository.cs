@@ -14,11 +14,16 @@ namespace ViberLounge.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Produto>> GetAllProductAsync()
+        public async Task<IEnumerable<Produto>> GetAllProductAsync(bool includeDeleted = false)
         {
-            return await _context.Produtos.Where(p => !p.IsDeleted).ToListAsync();
+            if (includeDeleted)
+            {
+                return await _context.Produtos.AsNoTracking()
+                    .IgnoreQueryFilters()
+                    .ToListAsync();
+            }
+            return await _context.Produtos.AsNoTracking().Where(p => !p.IsDeleted).ToListAsync();
         }
-
         public async Task AddAsync(Produto produto)
         {
             await _context.Produtos.AddAsync(produto);

@@ -5,7 +5,7 @@ namespace ViberLounge.Application.Services.Interfaces
 {
     public interface IProdutoService
     {
-        Task<List<ProductDto>> GetAllProductAsync();
+        Task<List<ProductDto>> GetAllProductAsync(bool includeDeleted = false);
         Task<IEnumerable<ProductDto>> GetProductsByTermAsync(SearchProductDto searchTerm);
         Task<ProductDto?> CreateProductAsync(CreateProductDto product);
         Task<Produto> UpdateProductAsync(UpdateProductDto product);
