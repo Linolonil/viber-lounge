@@ -4,6 +4,7 @@ using ViberLounge.API.Controllers;
 using ViberLounge.Domain.Entities;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using ViberLounge.Application.DTOs.User;
 using Microsoft.Extensions.Configuration;
 using ViberLounge.Infrastructure.Repositories.Interfaces;
 
@@ -58,7 +59,7 @@ namespace ViberLounge.Application.Services
 
             var token = GenerateToken(user);
 
-            var userDto = new UsuarioDto
+            var userDto = new UserDto
             {
                 Id = user.Id,
                 Email = user.Email,

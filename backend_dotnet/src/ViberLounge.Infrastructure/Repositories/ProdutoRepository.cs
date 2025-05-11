@@ -105,7 +105,15 @@ namespace ViberLounge.Infrastructure.Repositories
 
         public Task<Produto?> GetProductByIdAsync(int id)
         {
-            return _context.Produtos.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+            try
+            {
+                return _context.Produtos.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao buscar produto por ID: {ex.Message}");
+                return null!;
+            }
         }
 
         public Task<List<Produto>> GetProductsByDescriptionAsync(string descricao)
@@ -134,6 +142,21 @@ namespace ViberLounge.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             
             return produto;
+        }
+
+        public Task<Produto?> GetProductByIdAndAvailableStatus(int id)
+        {
+            try
+            {
+                return _context.Produtos
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted && p.Status == "DISPONIVEL");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao buscar produto por ID e status: {ex.Message}");
+                return null!;
+            }
         }
     }
 }

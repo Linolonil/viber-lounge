@@ -9,13 +9,13 @@ namespace ViberLounge.Application.Mapping
     {
         public MappingProfile()
         {
+            CreateMap<Usuario, UserDto>();
             CreateMap<Produto, ProductDto>();
             CreateMap<CreateProductDto, Produto>();
             // CreateMap<CriarProdutoCommand, Produto>();
             // CreateMap<AtualizarProdutoCommand, Produto>();
-            CreateMap<Venda, VendaDto>();
-            CreateMap<VendaItem, ItemVendaDto>();
-            CreateMap<Usuario, UsuarioDto>();
+            // CreateMap<Venda, VendaDto>();
+            // CreateMap<VendaItem, ItemVendaDto>();
         }
     }
 }

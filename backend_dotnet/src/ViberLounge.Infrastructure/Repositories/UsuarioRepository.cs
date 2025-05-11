@@ -42,5 +42,11 @@ namespace ViberLounge.Infrastructure.Repositories
             bool isValid = BCrypt.Net.BCrypt.Verify(senha, senhaHash);
             return Task.FromResult(isValid);
         }
+
+        public Task<bool> UserExistsAsync(int id)
+        {
+            bool exists = _context.Usuarios.AsNoTracking().Any(u => u.Id == id);
+            return Task.FromResult(exists);
+        }
     }
 }
