@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
+namespace ViberLounge.Application.DTOs.User;
 public class RegisterRequest
 {
     [Required(ErrorMessage = "O nome é obrigatório")]

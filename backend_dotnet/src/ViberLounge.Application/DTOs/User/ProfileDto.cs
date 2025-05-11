@@ -1,3 +1,5 @@
+
+namespace ViberLounge.Application.DTOs.User;
 public class ProfileDto
 {
     public string? Id { get; set; }

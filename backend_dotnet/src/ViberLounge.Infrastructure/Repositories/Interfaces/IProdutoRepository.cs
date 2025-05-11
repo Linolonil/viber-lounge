@@ -12,5 +12,6 @@ namespace ViberLounge.Infrastructure.Repositories.Interfaces
         Task<Produto> UpdateProductAsync(Produto produto);
         Task<Produto> DeleteProductAsync(Produto produto);
         Task<Produto> RestoreProductAsync(int id);
+        Task<Produto?> GetProductByIdAndAvailableStatus(int id);
     }
 }

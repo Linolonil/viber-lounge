@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
+namespace ViberLounge.Application.DTOs.User;
+
 public class LoginRequest
 {
     [Required(ErrorMessage = "O email é obrigatório")]

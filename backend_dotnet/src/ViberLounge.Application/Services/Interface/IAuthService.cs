@@ -1,4 +1,5 @@
 using ViberLounge.Domain.Entities;
+using ViberLounge.Application.DTOs.User;
 
 public interface IAuthService
 {
