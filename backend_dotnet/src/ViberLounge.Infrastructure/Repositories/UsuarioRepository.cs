@@ -16,7 +16,7 @@ namespace ViberLounge.Infrastructure.Repositories
         
         public async Task<Usuario?> IsEmailExists(string email)
         {
-            Usuario? usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
+            Usuario? usuario = await _context.Usuarios.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
             return usuario;
         }
         public async Task AddUserAsync(Usuario Usuario)
@@ -25,15 +25,15 @@ namespace ViberLounge.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Usuario> GetByIdAsync(int id)
+        public async Task UpdateAsync(int id, Usuario input)
         {
-            var Usuario = await _context.Usuarios.FindAsync(id) ?? throw new KeyNotFoundException($"Usuario with ID {id} not found.");
-            return Usuario;
-        }
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null) return;
 
-        public async Task UpdateAsync(Usuario Usuario)
-        {
-            _context.Usuarios.Update(Usuario);
+            usuario.Nome = input.Nome;
+            usuario.Email = input.Email;
+            usuario.Senha = input.Senha;
+
             await _context.SaveChangesAsync();
         }
 
