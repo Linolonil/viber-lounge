@@ -14,39 +14,32 @@ namespace ViberLounge.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<Venda> GetByIdAsync(int id)
+        public async Task<bool> CreateSaleWithItemsAsync(Venda sale, List<VendaItem> items)
         {
-            return await _context.Vendas
-                .Include(v => v.Itens)
-                .FirstOrDefaultAsync(v => v.Id == id) 
-                ?? throw new InvalidOperationException("Venda not found.");
-        }
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-        public async Task<IEnumerable<Venda>> GetAllAsync()
-        {
-            return await _context.Vendas
-                .Include(v => v.Itens)
-                .ToListAsync();
-        }
+            try
+            {
+                await _context.Vendas.AddAsync(sale);
+                await _context.SaveChangesAsync();
 
-        public async Task AddAsync(Venda venda)
-        {
-            await _context.Vendas.AddAsync(venda);
-            await _context.SaveChangesAsync();
-        }
+                foreach (var item in items)
+                {
+                    item.IdVenda = sale.Id;
+                }
 
-        public async Task UpdateAsync(Venda venda)
-        {
-            _context.Vendas.Update(venda);
-            await _context.SaveChangesAsync();
-        }
+                await _context.ItensVendas.AddRangeAsync(items);
+                await _context.SaveChangesAsync();
 
-        // public async Task<IEnumerable<Venda>> GetByPeriodoAsync(int periodoId)
-        // {
-        //     return await _context.Vendas
-        //         .Include(v => v.Itens)
-        //         .Where(v => v.PeriodoId == periodoId)
-        //         .ToListAsync();
-        // }
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch (DbUpdateException ex)
+            {
+                await transaction.RollbackAsync();
+                Console.WriteLine($"Erro ao salvar venda e itens: {ex.Message}");
+                return false;
+            }
+        }
     }
 }

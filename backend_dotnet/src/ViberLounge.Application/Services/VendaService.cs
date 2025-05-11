@@ -1,61 +1,64 @@
-using MediatR;
-using ViberLounge.API.Controllers;
+using ViberLounge.Domain.Entities;
+using ViberLounge.Application.DTOs.Sale;
 using ViberLounge.Application.Services.Interfaces;
+using ViberLounge.Infrastructure.Repositories.Interfaces;
 
 namespace ViberLounge.Application.Services
 {
     public class VendaService : IVendaService
     {
-        private readonly IMediator _mediator;
-
-        public VendaService(IMediator mediator)
+        private readonly IVendaRepository _saleRepository;
+        private readonly IUsuarioRepository _userRepository;
+        private readonly IProdutoRepository _productRepository;
+        public VendaService(IVendaRepository saleRepository, IUsuarioRepository userRepository, IProdutoRepository productRepository)
         {
-            _mediator = mediator;
+            _saleRepository = saleRepository;
+            _userRepository = userRepository;
+            _productRepository = productRepository;
         }
 
-        public Task<VendaDto> GetByIdAsync(int id)
+        public async Task<CreateSaleDto> CreateAsync(CreateSaleDto saleDto)
         {
-            throw new NotImplementedException();
+            if (saleDto.Items == null || saleDto.Items.Count == 0)
+                throw new Exception("Nenhum item informado na venda");
+
+            bool userExists = await _userRepository.UserExistsAsync(saleDto.UserId);
+            if (!userExists)
+                throw new Exception("Usuário não encontrado");
+
+            var sale = new Venda
+            {
+                NomeCliente = saleDto.CustomerName ?? "NAO_INFORMADO",
+                IdUsuario = saleDto.UserId,
+                PrecoTotal = Convert.ToDouble(saleDto.TotalPrice!),
+                FormaPagamento = saleDto.PaymentType
+            };
+
+            var saleItems = new List<VendaItem>();
+            
+            foreach (var item in saleDto.Items)
+            {
+                var product = await _productRepository.GetProductByIdAndAvailableStatus(item.ProductId);
+                if (product == null || product!.Quantidade < item.Quantity)
+                    continue;
+
+                saleItems.Add(new VendaItem
+                {
+                    IdProduto = item.ProductId,
+                    Quantidade = item.Quantity,
+                    Subtotal = Convert.ToDouble(item.Subtotal)
+                });
+            }
+
+            if (saleItems.Count == 0)
+                throw new Exception("Nenhum item válido para salvar.");
+
+            bool sucesso = await _saleRepository.CreateSaleWithItemsAsync(sale, saleItems);
+
+            if (!sucesso)
+                throw new Exception("Erro ao criar venda e seus itens.");
+
+            return saleDto;
         }
-
-        public Task<List<VendaDto>> GetByPeriodoAsync(int periodoId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<List<VendaDto>> GetByUsuarioAsync(int usuarioId, DateTime? dataInicio, DateTime? dataFim)
-        {
-            throw new NotImplementedException();
-        }
-
-        // public async Task<VendaDto> GetByIdAsync(int id)
-        // {
-        //     return await _mediator.Send(new GetVendaByIdQuery { Id = id });
-        // }
-
-        // public async Task<List<VendaDto>> GetByPeriodoAsync(int periodoId)
-        // {
-        //     return await _mediator.Send(new GetVendasByPeriodoQuery { PeriodoId = periodoId });
-        // }
-
-        // public async Task<List<VendaDto>> GetByUsuarioAsync(int usuarioId, DateTime? dataInicio, DateTime? dataFim)
-        // {
-        //     return await _mediator.Send(new GetVendasByUsuarioQuery 
-        //     { 
-        //         UsuarioId = usuarioId,
-        //         DataInicio = dataInicio,
-        //         DataFim = dataFim
-        //     });
-        // }
-
-        // public async Task<VendaDto> CreateAsync(CriarVendaCommand command)
-        // {
-        //     return await _mediator.Send(command);
-        // }
-
-        // public async Task<VendaDto> CancelAsync(CancelarVendaCommand command)
-        // {
-        //     return await _mediator.Send(command);
-        // }
     }
 }
