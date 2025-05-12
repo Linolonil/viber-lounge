@@ -1,3 +1,4 @@
+using Serilog;
 using System.Text;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Mvc;
@@ -7,16 +8,30 @@ using Microsoft.IdentityModel.Tokens;
 using ViberLounge.Application.Mapping;
 using ViberLounge.Application.Services;
 using ViberLounge.Infrastructure.Context;
+using ViberLounge.Infrastructure.Logging;
 using ViberLounge.Infrastructure.Repositories;
 using ViberLounge.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ViberLounge.Infrastructure.Repositories.Interfaces;
 
-
 var builder = WebApplication.CreateBuilder(args);
 string ENVIRONMENT = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 string connectionsStrings = ENVIRONMENT == "Development" ? "ConnectionStrings:DefaultConnection" : "ConnectionStrings:ProductionConnection";
+
+// Configuração do Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("logs/viber-lounge-.txt", 
+        rollingInterval: RollingInterval.Day,
+        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+        shared: true,
+        flushToDiskInterval: TimeSpan.FromSeconds(1))
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
@@ -107,6 +122,7 @@ void configDependencyService(IServiceCollection services){
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<IProdutoService, ProdutoService>();
     builder.Services.AddScoped<IVendaService, VendaService>();
+    builder.Services.AddSingleton<ILoggerService, LoggerService>();
 }
 
 // Configuração dos repositórios
@@ -116,7 +132,6 @@ void configDependencyRepository(IServiceCollection services)
     builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
     builder.Services.AddScoped<IVendaRepository, VendaRepository>();
 }
-
 
 void configModelError(IServiceCollection services)
 {
