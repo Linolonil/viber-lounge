@@ -38,10 +38,11 @@ builder.Services.AddHealthChecks();
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
-configModelError(builder.Services);
+configCors(builder);
 configSwagger(builder);
 configDataBase(builder);
 configJwtAuthentication(builder);
+configModelError(builder.Services);
 configDependencyInjection(builder);
 
 // Configuração da conexão com o banco de dados PostgreSQL
@@ -149,6 +150,22 @@ void configModelError(IServiceCollection services)
     });
 }
 
+void configCors(WebApplicationBuilder serviceProvider)
+{
+    var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowedOriginsPolicy", policy =>
+        {
+            policy
+                .WithOrigins(allowedOrigins)
+                .AllowAnyMethod()   
+                .AllowAnyHeader()
+                .AllowCredentials(); 
+        });
+    });
+}
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -158,6 +175,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors("AllowedOriginsPolicy");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health", new HealthCheckOptions{ Predicate = _ => true, ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse});
