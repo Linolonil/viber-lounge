@@ -160,7 +160,7 @@ namespace ViberLounge.Application.Services
                 if (product == null || product!.Quantidade < groupedItem.Quantity)
                 {
                     _logger.LogWarning("Produto {ProductId} não encontrado ou quantidade insuficiente. Quantidade solicitada: {Quantity}, Disponível: {Available}", groupedItem.ProductId, groupedItem.Quantity, product?.Quantidade ?? 0);
-                    continue;
+                    throw new Exception("Nenhum item válido para salvar.");
                 }
 
                 product.Quantidade -= groupedItem.Quantity;
