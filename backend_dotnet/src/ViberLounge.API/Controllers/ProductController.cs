@@ -7,7 +7,7 @@ namespace ViberLounge.API.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("product")]
+[Route("[controller]")]
 public class ProductController : ControllerBase
 {
     private readonly IProdutoService _produtoService;

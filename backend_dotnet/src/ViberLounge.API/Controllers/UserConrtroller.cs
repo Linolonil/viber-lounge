@@ -7,10 +7,11 @@ namespace ViberLounge.API.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("auth")]
+[Route("[controller]")]
+[Produces("application/json")]
 public class AuthProfileController : ControllerBase
 {
-    [HttpGet("profile")]
+    [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public IActionResult Profile()

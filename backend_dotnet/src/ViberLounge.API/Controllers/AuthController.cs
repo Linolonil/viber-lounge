@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace ViberLounge.API.Controllers;
 
-[Route("auth")]
 [ApiController]
+[Route("[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
