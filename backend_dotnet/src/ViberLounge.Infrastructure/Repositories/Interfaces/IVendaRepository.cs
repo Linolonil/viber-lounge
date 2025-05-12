@@ -5,9 +5,8 @@ namespace ViberLounge.Infrastructure.Repositories.Interfaces
     public interface IVendaRepository
     {
         Task<bool> CreateSaleWithItemsAsync(Venda sale, List<VendaItem> items);
-        // Task<Sale> GetSaleByIdAsync(int id);
-        // Task<IEnumerable<Sale>> GetAllSalesAsync();
-        // Task<bool> UpdateSaleAsync(Sale sale);
-        // Task<bool> DeleteSaleAsync(int id);
+        Task<bool> CreateSaleWithItemsAndUpdateProductsAsync(Venda sale, List<VendaItem> items, List<Produto> products);
+        Task<Venda?> GetSaleByIdAsync(int id);
+        Task<bool> CancelSaleAsync(Venda sale, VendaCancelada cancelamento);
     }
 }

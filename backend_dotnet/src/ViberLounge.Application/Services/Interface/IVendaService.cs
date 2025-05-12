@@ -4,6 +4,8 @@ namespace ViberLounge.Application.Services.Interfaces
 {
     public interface IVendaService
     {
-        Task<CreateSaleDto> CreateAsync(CreateSaleDto saleDto);
+        Task<SaleResponseDto> CreateAllSaleAsync(CreateSaleDto saleDto);
+        Task<SaleResponseDto?> GetSaleByIdAsync(int id);
+        Task<SaleResponseDto?> CancelSaleAsync(int id, CancelSaleDto cancelDto);
     }
 }
