@@ -21,7 +21,7 @@ namespace ViberLounge.Domain.Entities
     }
     public static class ProdutoStatusExtensions
     {
-        public static string ToProdutoStatus(int quantidade)
+        public static string ToProductStatus(int quantidade)
         {
             return quantidade == 0 ? "INDISPONIVEL" : "DISPONIVEL";
         }

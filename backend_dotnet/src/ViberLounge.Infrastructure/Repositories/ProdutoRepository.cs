@@ -158,5 +158,22 @@ namespace ViberLounge.Infrastructure.Repositories
                 return null!;
             }
         }
+
+        public Task<List<Produto>> UpdateProductStockAsync(List<Produto> produtos)
+        {
+            foreach (var produto in produtos)
+            {
+                var existingEntity = _context.Produtos.Find(produto.Id);
+                
+                if (existingEntity != null)
+                {
+                    existingEntity.Quantidade -= produto.Quantidade;
+                    existingEntity.UpdatedAt = DateTime.UtcNow;
+                    _context.Entry(existingEntity).State = EntityState.Modified;
+                }
+            }
+
+            return _context.SaveChangesAsync().ContinueWith(t => produtos);
+        }
     }
 }

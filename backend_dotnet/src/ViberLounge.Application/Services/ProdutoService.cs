@@ -67,7 +67,7 @@ namespace ViberLounge.Application.Services
                 Preco = Convert.ToDouble(product.Preco),
                 ImagemUrl = product.ImagemUrl,
                 Quantidade = product.Quantidade,
-                Status = ProdutoStatusExtensions.ToProdutoStatus(product.Quantidade)
+                Status = ProdutoStatusExtensions.ToProductStatus(product.Quantidade)
             };
             
             Produto? produtoCriado = await _produtoRepository.CreateProductAsync(produto);
@@ -85,7 +85,7 @@ namespace ViberLounge.Application.Services
             productExist.Preco = Convert.ToDouble(product.Preco);
             productExist.ImagemUrl = product.ImagemUrl;
             productExist.Quantidade = product.Quantidade;
-            productExist.Status = ProdutoStatusExtensions.ToProdutoStatus(product.Quantidade);
+            productExist.Status = ProdutoStatusExtensions.ToProductStatus(product.Quantidade);
             
             var updatedProduct = await _produtoRepository.UpdateProductAsync(productExist);
             return updatedProduct;
