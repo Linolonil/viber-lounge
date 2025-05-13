@@ -36,6 +36,18 @@
                 "${workspaceFolder}/backend_dotnet/ViberLounge.sln"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "type": "npm",
+            "script": "dev",
+            "path": "frontend/",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "label": "npm: dev",
+            "detail": "vite",
+            "problemMatcher": []
         }
     ]
 }
