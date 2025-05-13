@@ -11,10 +11,10 @@ namespace ViberLounge.API.Controllers;
 [Produces("application/json")]
 public class SaleController : ControllerBase
 {
-    private readonly IVendaService _vendaService;
+    private readonly ISaleService _vendaService;
     private readonly ILogger<SaleController> _logger;
 
-    public SaleController(IVendaService vendaService, ILogger<SaleController> logger)
+    public SaleController(ISaleService vendaService, ILogger<SaleController> logger)
     {
         _vendaService = vendaService;
         _logger = logger;

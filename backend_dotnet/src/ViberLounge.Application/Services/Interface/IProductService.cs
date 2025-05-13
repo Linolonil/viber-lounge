@@ -3,7 +3,7 @@ using ViberLounge.Application.DTOs.Product;
 
 namespace ViberLounge.Application.Services.Interfaces
 {
-    public interface IProdutoService
+    public interface IProductService
     {
         Task<List<ProductDto>> GetAllProductAsync(bool includeDeleted = false);
         Task<IEnumerable<ProductDto>> GetProductsByTermAsync(SearchProductDto searchTerm);

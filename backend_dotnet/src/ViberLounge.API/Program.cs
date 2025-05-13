@@ -19,19 +19,6 @@ var builder = WebApplication.CreateBuilder(args);
 string ENVIRONMENT = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 string connectionsStrings = ENVIRONMENT == "Development" ? "ConnectionStrings:DefaultConnection" : "ConnectionStrings:ProductionConnection";
 
-// Configuração do Serilog
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
-    .WriteTo.Console(
-        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-    .WriteTo.File("logs/viber-lounge-.txt", 
-        rollingInterval: RollingInterval.Day,
-        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message:lj}{NewLine}{Exception}",
-        shared: true,
-        flushToDiskInterval: TimeSpan.FromSeconds(1))
-    .CreateLogger();
-
-builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
@@ -113,16 +100,16 @@ void configSwagger(WebApplicationBuilder serviceProvider)
 // Configuração da injeção de dependência
 void configDependencyInjection(WebApplicationBuilder builder)
 {
+    builder.Services.AddSingleton<ILoggerService, LoggerService>();
     builder.Services.AddScoped<ValidateModelAttribute>();
     configDependencyService(builder.Services);
     configDependencyRepository(builder.Services);
 }
-
 // Configuração dos serviços
 void configDependencyService(IServiceCollection services){
     builder.Services.AddScoped<IAuthService, AuthService>();
-    builder.Services.AddScoped<IProdutoService, ProdutoService>();
-    builder.Services.AddScoped<IVendaService, VendaService>();
+    builder.Services.AddScoped<IProductService, ProductService>();
+    builder.Services.AddScoped<ISaleService, SaleService>();
     builder.Services.AddSingleton<ILoggerService, LoggerService>();
 }
 
