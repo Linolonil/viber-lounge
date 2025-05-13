@@ -32,10 +32,11 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        _logger.LogInformation("Recebendo requisição de login");
+        _logger.LogInformation("Recebendo requisição de login para o usuário {Email}", request.Email!);
         try
         {
             var result = await _authService.LoginAsync(request);
+            _logger.LogInformation("Login realizado com sucesso para o usuário {Email}", request.Email!);
             return Ok(result);
         }
         catch (Exception ex)
@@ -62,6 +63,7 @@ public class AuthController : ControllerBase
         try
         {
             Usuario? newUser = await _authService.RegisterAsync(request);
+            _logger.LogInformation("Usuário {Email} registrado com sucesso", newUser.Email!);
             return Created(string.Empty, new { message = "Usuário cadastrado com sucesso" });
         }
         catch (Exception ex)
