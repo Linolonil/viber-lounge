@@ -29,7 +29,7 @@ export const RegisterForm: React.FC = () => {
       toast.success('Registro realizado com sucesso!');
       navigate('/login');
     } catch (error) {
-      toast.error('Erro ao registrar. Tente novamente.');
+      toast.error(error.response.data.message);
     }
   };
 

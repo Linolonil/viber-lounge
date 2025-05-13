@@ -77,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await registerMutation.mutateAsync({ nome, email, senha });
   };
 
-  const isAuthenticated = !!token;
+  const isAuthenticated = !!user ;
 
   return (
     <AuthContext.Provider value={{ 

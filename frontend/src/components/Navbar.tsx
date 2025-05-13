@@ -55,7 +55,7 @@ export default function Navbar() {
   };
 
   // Filtrar itens do menu baseado no papel do usuário
-  const filteredMenuItems = menuItems.filter(item => !item.adminOnly || user?.role === 'admin');
+  const filteredMenuItems = menuItems.filter(item => !item.adminOnly || user?.role === 'ADMIN');
 
   return (
     <nav className="h-full w-64  border-r border-zinc-700 bg-viber-purple p-4 flex flex-col">
@@ -68,7 +68,7 @@ export default function Navbar() {
               <span className="text-sm">{user.nome}</span>
             </div>
             <div className="text-xs text-gray-400 mt-1">
-              {user.role === 'admin' ? 'Administrador' : 'Vendedor'}
+              {user.role === 'ADMIN' ? 'Administrador' : 'Vendedor'}
             </div>
           </div>
         )}
