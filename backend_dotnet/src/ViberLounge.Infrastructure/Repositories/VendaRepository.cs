@@ -19,12 +19,17 @@ namespace ViberLounge.Infrastructure.Repositories
 
         public async Task<Venda?> GetSaleByIdAsync(int id)
         {
-            _logger.LogInformation("Buscando venda {SaleId}", id);
-            
-            return await _context.Vendas
-                .Include(v => v.Itens)
-                .Include(v => v.VendaCancelada)
-                .FirstOrDefaultAsync(v => v.Id == id);
+            try{
+                return await _context.Vendas
+                    .AsNoTracking()
+                    .Include(v => v.Itens)
+                    .Include(v => v.VendaCancelada)
+                    .FirstOrDefaultAsync(v => v.Id == id);
+            }catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao buscar venda com ID {SaleId}", id);
+                throw;
+            }
         }
 
         public async Task<bool> CancelSaleAsync(Venda sale, VendaCancelada cancelamento)
