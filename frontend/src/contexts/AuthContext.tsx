@@ -1,78 +1,94 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '../types/auth';
+import React, { createContext, useContext } from 'react';
+import { AuthContextType, User } from '../types/auth';
 import authService from '../services/authService';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  login: (email: string, senha: string) => Promise<void>;
-  logout: () => Promise<void>;
-  register: (nome: string, email: string, senha: string) => Promise<void>;
-}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem('user');
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('token');
-  });
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const initAuth = async () => {
+  // Query para obter o usuário atual
+  const { data: user, isLoading: isInitializing } = useQuery<User | null>({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return null;
+
       try {
-        const storedToken = localStorage.getItem('token');
-        if (storedToken) {
-          setToken(storedToken);
-          const user = await authService.getCurrentUser();
-          setUser(user);
-          localStorage.setItem('user', JSON.stringify(user));
-        }
+        const user = await authService.getCurrentUser();
+        return user;
       } catch (error) {
-        console.error('Error initializing auth:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        setToken(null);
-        setUser(null);
-      } finally {
-        setLoading(false);
+        return null;
       }
-    };
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutos
+  });
 
-    initAuth();
-  }, []);
+  // Query para obter o token (armazenado no localStorage)
+  const { data: token } = useQuery<string | null>({
+    queryKey: ['authToken'],
+    queryFn: () => localStorage.getItem('token'),
+    initialData: localStorage.getItem('token') || null,
+  });
 
-  const login = async (email: string, senha: string) => {
-    const response = await authService.login({ email, senha });
-    setUser(response.user);
-    setToken(response.token);
-    localStorage.setItem('token', response.token);
-    localStorage.setItem('user', JSON.stringify(response.user));
+  // Mutação para login
+  const loginMutation = useMutation({
+    mutationFn: (credentials: { email: string; senha: string }) => 
+      authService.login(credentials),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['currentUser'], data.user);
+      queryClient.setQueryData(['authToken'], data.token);
+    },
+  });
+
+  // Mutação para logout
+  const logoutMutation = useMutation({
+    mutationFn:  () => {
+      authService.logout();
+      return null;
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(['currentUser'], null);
+      queryClient.setQueryData(['authToken'], null);
+      queryClient.clear();
+    },
+  });
+
+  // Mutação para registro
+  const registerMutation = useMutation({
+    mutationFn: (data: { nome: string; email: string; senha: string }) => 
+      authService.register(data),
+  });
+
+  // Funções de conveniência para o contexto
+  const login =  async (email: string, senha: string) => {
+   await  loginMutation.mutateAsync({ email, senha });
   };
 
-  const logout = async () => {
-    await authService.logout();
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+   const logout = (): void => {
+     logoutMutation.mutateAsync();
   };
 
   const register = async (nome: string, email: string, senha: string) => {
-    await authService.register({ nome, email, senha });
+    await registerMutation.mutateAsync({ nome, email, senha });
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  const isAuthenticated = !!token;
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, register }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      isInitializing,
+      isAuthenticated,
+      login, 
+      logout, 
+      register 
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -84,4 +100,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};

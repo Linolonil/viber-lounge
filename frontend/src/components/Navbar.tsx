@@ -18,9 +18,9 @@ export default function Navbar() {
     { path: "/historico", icon: History, label: "Histórico de Vendas", adminOnly: false },
   ];
 
-  const handleLogout = async () => {
+  const handleLogout =  () => {
     try {
-      await logout();
+      logout();
       toast.success('Logout realizado com sucesso!');
       navigate('/login');
     } catch (error) {

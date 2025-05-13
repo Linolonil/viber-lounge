@@ -1,7 +1,7 @@
 import { DadosGrafico, Produto, Venda, ItemVenda, FormaPagamento, PeriodoTrabalho } from "@/lib/types";
 import axios from "axios";
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+export const API_URL = import.meta.env.VITE_API_URL ;
 export const API_IMG = import.meta.env.VITE_API_IMG_URL;
 
 interface ApiError {

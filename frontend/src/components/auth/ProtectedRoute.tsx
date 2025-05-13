@@ -11,19 +11,19 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireAdmin = false,
 }) => {
-  const { user, loading } = useAuth();
+  const { user, isInitializing, isAuthenticated } = useAuth();
 
-  if (loading) {
+  if (isInitializing) {
     return <div>Loading...</div>;
   }
 
-  if (!user) {
-    return <Navigate to="/login" />;
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
   }
 
-  if (requireAdmin && user.role !== 'admin') {
-    return <Navigate to="/" />;
+  if (requireAdmin && user.role !== 'ADMIN') {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
-}; 
+};
