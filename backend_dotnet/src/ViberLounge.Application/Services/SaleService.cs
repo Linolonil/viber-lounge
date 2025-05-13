@@ -210,9 +210,21 @@ namespace ViberLounge.Application.Services
             return _mapper.Map<SaleResponseDto>(sale);
         }
 
-        public Task<SaleResponseDto?> GetSaleByIdAsync(int id)
+        public async Task<SaleResponseDto?> GetSaleByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            _logger.LogInformation("Iniciando busca pela venda {SaleId}", id);
+            try{
+
+                var venda = await _saleRepository.GetSaleByIdAsync(id);
+                if (venda == null)
+                    return null;
+
+                _logger.LogInformation("Venda {SaleId} encontrada com sucesso", id);
+                return _mapper.Map<SaleResponseDto>(venda);
+            }catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
         }
     }
 }

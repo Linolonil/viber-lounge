@@ -63,12 +63,22 @@ public class SaleController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetSaleById(int id)
     {
+        _logger.LogInformation("Recebendo requisição para buscar venda {SaleId}", id);
         try
         {
+            if (id <= 0){
+                _logger.LogWarning("ID inválido fornecido: {SaleId}", id);
+                return BadRequest(new { message = "ID inválido" });
+            }
+            
             var sale = await _vendaService.GetSaleByIdAsync(id);
-            if (sale == null)
+            
+            if (sale == null){
+                _logger.LogWarning("Venda não encontrada para o ID: {SaleId}", id);
                 return NotFound(new { message = "Venda não encontrada" });
+            }
 
+            _logger.LogInformation("Venda encontrada: {SaleId}", id);
             return Ok(sale);
         }
         catch (Exception ex)
