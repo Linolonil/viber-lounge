@@ -7,7 +7,7 @@ using ViberLounge.Infrastructure.Repositories.Interfaces;
 
 namespace ViberLounge.Application.Services
 {
-    public class VendaService : IVendaService
+    public class SaleService : ISaleService
     {
         private readonly ILoggerService _logger;
         private readonly IVendaRepository _saleRepository;
@@ -15,7 +15,7 @@ namespace ViberLounge.Application.Services
         private readonly IProdutoRepository _productRepository;
         private readonly IMapper _mapper;
 
-        public VendaService(
+        public SaleService(
             IVendaRepository saleRepository, 
             IUsuarioRepository userRepository, 
             IProdutoRepository productRepository, 

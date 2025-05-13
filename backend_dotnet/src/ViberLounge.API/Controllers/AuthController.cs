@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using ViberLounge.Domain.Entities;
 using ViberLounge.Application.DTOs.User;
 using Microsoft.AspNetCore.Authorization;
+using ViberLounge.Infrastructure.Logging;
 
 namespace ViberLounge.API.Controllers;
 
@@ -11,10 +12,11 @@ namespace ViberLounge.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
-
-    public AuthController(IAuthService authService)
+    private readonly ILoggerService _logger;
+    public AuthController(IAuthService authService, ILoggerService logger)
     {
         _authService = authService;
+        _logger = logger;
     }
     
     /// <summary>
@@ -30,13 +32,15 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
+        _logger.LogInformation("Recebendo requisição de login");
         try
         {
             var result = await _authService.LoginAsync(request);
             return Ok(result);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Falha de autenticação: {Message}", ex.Message);
             return Unauthorized(new { message = ex.Message });
         }
     }
@@ -54,6 +58,7 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
+        _logger.LogInformation("Recebendo requisição de registro");
         try
         {
             Usuario? newUser = await _authService.RegisterAsync(request);
@@ -61,6 +66,7 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Erro ao registrar usuário");
             return BadRequest(new { message = ex.Message });
         }
     }

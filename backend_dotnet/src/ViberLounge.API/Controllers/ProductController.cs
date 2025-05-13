@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using ViberLounge.Infrastructure.Logging;
 using ViberLounge.Application.DTOs.Product;
 using ViberLounge.Application.Services.Interfaces;
 
@@ -11,10 +12,12 @@ namespace ViberLounge.API.Controllers;
 [Produces("application/json")]
 public class ProductController : ControllerBase
 {
-    private readonly IProdutoService _produtoService;
+    private readonly ILoggerService _logger;
+    private readonly IProductService _produtoService;
 
-    public ProductController(IProdutoService produtoService)
+    public ProductController(ILoggerService logger, IProductService produtoService)
     {
+        _logger = logger;
         _produtoService = produtoService;
     }
 
@@ -32,13 +35,16 @@ public class ProductController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<List<ProductDto>>> GetAll(bool includeDeleted = false)
     {
+        _logger.LogInformation("Recebendo requisição para obter todos os produtos com includeDeleted: {includeDeleted}", includeDeleted);
         try
         {
             var produtos = await _produtoService.GetAllProductAsync(includeDeleted);
+            _logger.LogInformation("Produtos obtidos com sucesso");
             return Ok(produtos);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Erro ao obter produtos");
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -57,18 +63,21 @@ public class ProductController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> SearchT([FromQuery] SearchProductDto searchTerm)
+    public async Task<ActionResult<IEnumerable<ProductDto>>> SearchTerm([FromQuery] SearchProductDto searchTerm)
     {
+        _logger.LogInformation("Recebendo requisição para buscar produtos com o termo: {searchTerm}", searchTerm.Descricao ?? searchTerm.Id.ToString()!);
         try
         {
             var produto = await _produtoService.GetProductsByTermAsync(searchTerm);
-            if (!produto.Any()) 
+            if (!produto.Any()){
+                _logger.LogInformation("Nenhum produto encontrado com o termo: {searchTerm}", searchTerm.Descricao ?? searchTerm.Id.ToString()!);
                 return NoContent();
-                
+            }
             return Ok(produto);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Erro ao buscar produtos com o termo: {searchTerm}", searchTerm.Descricao ?? searchTerm.Id.ToString()!);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -87,11 +96,14 @@ public class ProductController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult> Create([FromBody] CreateProductDto product)
     {
+        _logger.LogInformation("Recebendo requisição para criar um novo produto: {descricao}", product.Descricao!);
         try{
-            ProductDto? produto = await _produtoService.CreateProductAsync(product);
+            var produto = await _produtoService.CreateProductAsync(product);
+            _logger.LogInformation("Produto criado com sucesso: {descricao}", product.Descricao!);
             return Created(string.Empty, produto);
         }catch(Exception ex)
         {
+            _logger.LogError(ex, "Erro ao criar produto: {product}", product.Descricao!);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -110,14 +122,19 @@ public class ProductController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult> Update([FromBody] UpdateProductDto product)
     {
+        _logger.LogInformation("Recebendo requisição para atualizar o produto com Id: {id}", product.Id!);
         try
         {
             var updatedProduct = await _produtoService.UpdateProductAsync(product);
+            _logger.LogInformation("Produto atualizado com sucesso: {id}", product.Id!);
             return Ok(updatedProduct);
         }
         catch (Exception ex)
         {
-            return NotFound(new { message = ex.Message });
+            _logger.LogError(ex, "Erro ao atualizar produto com ID: {id}", product.Id!);
+            if (ex.Message.Contains("não encontrado"))
+                return NotFound(new { message = ex.Message });
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -137,20 +154,27 @@ public class ProductController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult> Delete([FromQuery] int id)
     {
+        _logger.LogInformation("Recebendo requisição para remover o produto com ID: {id}", id);
         try
         {
-            if (id <= 0)
+            if (id <= 0){
+                _logger.LogWarning("ID inválido: {id}", id);
                 return BadRequest(new { message = "ID inválido." });
+            }
 
             bool result = await _produtoService.DeleteProductAsync(id);
 
-            if (!result)
+            if (!result){
+                _logger.LogWarning("Produto com ID {id} não encontrado.", id);
                 return NotFound(new { message = $"Produto com ID {id} não encontrado." });
+            }
 
+            _logger.LogInformation("Produto com ID {id} removido com sucesso.", id);
             return NoContent();
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Erro ao remover produto com ID: {id}", id);
             return BadRequest(new { message = ex.Message });
         }
     }
