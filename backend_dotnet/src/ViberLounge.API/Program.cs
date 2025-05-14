@@ -71,7 +71,18 @@ void configSwagger(WebApplicationBuilder serviceProvider)
 {
     builder.Services.AddSwaggerGen(c =>
     {
-        c.SwaggerDoc("v1", new OpenApiInfo { Title = "ViberLounge API", Version = "v1" });
+        c.SwaggerDoc("v1", new OpenApiInfo 
+        { 
+            Title = "ViberLounge API",
+            Version = "v1",
+            Description = "API para gerenciamento de produtos e vendas",
+            Contact = new OpenApiContact
+            {
+                Name = "ViberLounge Support",
+                Email = "",
+                Url = new Uri("https://ViberLounge.com/support")
+            }
+        });
         c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
             In = ParameterLocation.Header,
@@ -158,7 +169,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ViberLounge API V1");
+        c.RoutePrefix = string.Empty; // Define a URL base para o Swagger
+    });
 }
 
 app.UseHttpsRedirection();

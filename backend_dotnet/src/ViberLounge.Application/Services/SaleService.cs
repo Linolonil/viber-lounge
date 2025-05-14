@@ -226,5 +226,10 @@ namespace ViberLounge.Application.Services
                 throw new Exception(ex.Message, ex);
             }
         }
+
+        public Task<List<SaleResponseFromDataDto>> GetSalesByDateAsync(SaleRequestFromDataDto saleRequest)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

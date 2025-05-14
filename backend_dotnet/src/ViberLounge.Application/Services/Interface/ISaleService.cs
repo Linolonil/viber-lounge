@@ -7,5 +7,6 @@ namespace ViberLounge.Application.Services.Interfaces
         Task<SaleResponseDto> CreateAllSaleAsync(CreateSaleDto saleDto);
         Task<SaleResponseDto?> GetSaleByIdAsync(int id);
         Task<SaleResponseDto?> CancelSaleAsync(int id, CancelSaleDto cancelDto);
+        Task<List<SaleResponseFromDataDto>> GetSalesByDateAsync(SaleRequestFromDataDto saleRequest);
     }
 }
