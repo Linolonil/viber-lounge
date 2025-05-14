@@ -21,6 +21,45 @@ public class SaleController : ControllerBase
     }
 
     /// <summary>
+    /// Obtém todas as vendas
+    /// </summary>
+    /// <returns>Lista de vendas</returns>
+    /// <response code="200">Retorna a lista de vendas</response>
+    /// <response code="204">Se não houver vendas</response>
+    /// <response code="401">Se o usuário não estiver autenticado</response>
+    /// <response code="500">Se ocorrer um erro interno</response>
+    [HttpGet()]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(IEnumerable<SaleResponseFromDataDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSaleFromData([FromQuery] SaleRequestFromDataDto saleFromData)
+    {
+        _logger.LogInformation("Recebendo requisição para obter todas as vendas");
+        
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("Requisição inválida: {errors}", ModelState);
+                return BadRequest(ModelState);
+            }
+            var result = await _vendaService.GetSalesByDateAsync(saleFromData);
+            if (result == null || !result.Any())
+            {
+                _logger.LogWarning("Nenhuma venda encontrada");
+                return NoContent();
+            }
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao obter vendas");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Erro ao processar a requisição", error = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Cria uma nova venda
     /// </summary>
     /// <param name="saleDto">Dados da venda</param>
@@ -29,7 +68,7 @@ public class SaleController : ControllerBase
     /// <response code="400">Se os dados da venda forem inválidos</response>
     /// <response code="401">Se o usuário não estiver autenticado</response>
     /// <response code="500">Se ocorrer um erro interno</response>
-    [HttpPost]
+    [HttpPost("create")]
     [ProducesResponseType(typeof(SaleResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -57,7 +96,7 @@ public class SaleController : ControllerBase
     /// <response code="200">Retorna a venda solicitada</response>
     /// <response code="404">Se a venda não for encontrada</response>
     /// <response code="401">Se o usuário não estiver autenticado</response>
-    [HttpGet("{id}")]
+    [HttpGet("create/{id}")]
     [ProducesResponseType(typeof(SaleResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -98,7 +137,7 @@ public class SaleController : ControllerBase
     /// <response code="400">Se os dados do cancelamento forem inválidos</response>
     /// <response code="404">Se a venda não for encontrada</response>
     /// <response code="401">Se o usuário não estiver autenticado</response>
-    [HttpPost("{id}/cancel")]
+    [HttpPut("{id}/cancel")]
     [ProducesResponseType(typeof(SaleResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
