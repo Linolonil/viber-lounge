@@ -91,10 +91,11 @@ public class ProductController : ControllerBase
     /// <response code="400">Se os dados do produto forem inválidos</response>
     /// <response code="401">Se o usuário não estiver autenticado</response>
     [HttpPost("create")]
+    [Consumes("multipart/form-data")] // Indica que aceita form-data para upload de arquivos
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult> Create([FromBody] CreateProductDto product)
+    public async Task<ActionResult> Create([FromForm] CreateProductDto product) // Use FromForm em vez de FromBody
     {
         _logger.LogInformation("Recebendo requisição para criar um novo produto: {descricao}", product.Descricao!);
         try{
@@ -117,10 +118,11 @@ public class ProductController : ControllerBase
     /// <response code="404">Se o produto não for encontrado</response>
     /// <response code="401">Se o usuário não estiver autenticado</response>
     [HttpPut("update")]
+    [Consumes("multipart/form-data")] // Para suportar upload de arquivo
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult> Update([FromBody] UpdateProductDto product)
+    public async Task<ActionResult> Update([FromForm] UpdateProductDto product) // Use FromForm
     {
         _logger.LogInformation("Recebendo requisição para atualizar o produto com Id: {id}", product.Id!);
         try

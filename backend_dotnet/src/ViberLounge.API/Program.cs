@@ -14,6 +14,7 @@ using ViberLounge.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ViberLounge.Infrastructure.Repositories.Interfaces;
+using ViberLounge.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 string ENVIRONMENT = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
@@ -113,6 +114,7 @@ void configDependencyInjection(WebApplicationBuilder builder)
 {
     builder.Services.AddSingleton<ILoggerService, LoggerService>();
     builder.Services.AddScoped<ValidateModelAttribute>();
+    builder.Services.AddScoped<IFileService, FileService>();
     configDependencyService(builder.Services);
     configDependencyRepository(builder.Services);
 }
@@ -177,6 +179,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("AllowedOriginsPolicy");
 app.UseAuthentication();

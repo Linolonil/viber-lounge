@@ -1,6 +1,7 @@
 using AutoMapper;
 using ViberLounge.Domain.Entities;
 using ViberLounge.Infrastructure.Logging;
+using ViberLounge.Infrastructure.Services;
 using ViberLounge.Application.DTOs.Product;
 using ViberLounge.Application.Services.Interfaces;
 using ViberLounge.Infrastructure.Repositories.Interfaces;
@@ -11,12 +12,14 @@ namespace ViberLounge.Application.Services
     {
         private readonly IMapper _mapper;
         private readonly ILoggerService _logger;
+        private readonly IFileService _fileService;
         private readonly IProdutoRepository _produtoRepository;
 
-        public ProductService(IProdutoRepository produtoRepository, ILoggerService logger, IMapper mapper)
+        public ProductService(IMapper mapper, ILoggerService logger, IFileService fileService,  IProdutoRepository produtoRepository)
         {
             _mapper = mapper;
             _logger = logger;
+            _fileService = fileService;
             _produtoRepository = produtoRepository;
         }
 
@@ -79,11 +82,19 @@ namespace ViberLounge.Application.Services
                 if(produtoExist != null)
                     throw new Exception("Produto já existe");
 
+                string imageUrl = string.Empty;
+                if (product.ImagemFile != null && product.ImagemFile.Length > 0)
+                {
+                    imageUrl = await _fileService.SaveFileAsync(product.ImagemFile);
+                }
+                if (string.IsNullOrEmpty(imageUrl))
+                    throw new Exception("Erro ao salvar a imagem do produto");
+
                 Produto produto = new (){
                     Descricao = product.Descricao,
                     DescricaoLonga = product.DescricaoLonga,
                     Preco = Convert.ToDouble(product.Preco),
-                    ImagemUrl = product.ImagemUrl,
+                    ImagemUrl = imageUrl,
                     Quantidade = product.Quantidade,
                     Status = ProdutoStatusExtensions.ToProductStatus(product.Quantidade)
                 };
@@ -96,23 +107,36 @@ namespace ViberLounge.Application.Services
             }
         }
         
-        public async Task<Produto> UpdateProductAsync(UpdateProductDto product)
+        public async Task<ProductDto> UpdateProductAsync(UpdateProductDto product)
         {
             _logger.LogInformation("Atualizando produto com ID: {id}", product.Id);
             try{
                 var productExist = await _produtoRepository.GetProductByIdAsync(product.Id);
                 if (productExist == null)
                     throw new Exception($"Produto com ID {product.Id} não encontrado.");
+                
+                string imageUrl = string.Empty;
+                if (product.ImagemFile != null && product.ImagemFile.Length > 0)
+                {
+                    if (!string.IsNullOrEmpty(productExist.ImagemUrl) && 
+                        productExist.ImagemUrl.StartsWith("/images/"))
+                    {
+                        _fileService.DeleteFile(productExist.ImagemUrl);
+                    }
+                    
+                    imageUrl = await _fileService.SaveFileAsync(product.ImagemFile);
+                }
                     
                 productExist.Descricao = product.Descricao;
                 productExist.DescricaoLonga = product.DescricaoLonga;
                 productExist.Preco = Convert.ToDouble(product.Preco);
-                productExist.ImagemUrl = product.ImagemUrl;
+                productExist.ImagemUrl = imageUrl ?? productExist.ImagemUrl;
                 productExist.Quantidade = product.Quantidade;
                 productExist.Status = ProdutoStatusExtensions.ToProductStatus(product.Quantidade);
                 
                 var updatedProduct = await _produtoRepository.UpdateProductAsync(productExist);
-                return updatedProduct;
+                
+                return _mapper.Map<ProductDto>(updatedProduct);
             }catch (Exception ex)
             {
                 throw new Exception(ex.Message);
@@ -125,6 +149,12 @@ namespace ViberLounge.Application.Services
                 var productExist = await _produtoRepository.GetProductByIdAsync(id);
                 if (productExist == null)
                     return false;
+                    
+                if (!string.IsNullOrEmpty(productExist.ImagemUrl) &&
+                    productExist.ImagemUrl.StartsWith("/images/"))
+                {
+                    _fileService.DeleteFile(productExist.ImagemUrl);
+                }
 
                 await _produtoRepository.DeleteProductAsync(productExist);
                 return true;
