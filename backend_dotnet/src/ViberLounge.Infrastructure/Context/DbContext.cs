@@ -88,10 +88,6 @@ namespace ViberLounge.Infrastructure.Context
                 b.ToTable("Vendas");
                 b.HasKey(x => x.Id);
 
-                b.Property(x => x.Status)
-                .HasConversion<string>()
-                .IsRequired();
-
                 b.Property(x => x.FormaPagamento)
                 .HasConversion<string>()
                 .IsRequired();
