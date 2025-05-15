@@ -40,7 +40,7 @@ namespace ViberLounge.Application.Services
                 return null;
             }
 
-            if (venda.Status == "CANCELADA")
+            if (venda.Cancelado)
             {
                 _logger.LogWarning("Venda {SaleId} já está cancelada", id);
                 throw new Exception("Esta venda já está cancelada");
@@ -80,24 +80,24 @@ namespace ViberLounge.Application.Services
             }
             else
             {
-                // Cancela a venda inteira
-                venda.Status = "CANCELADA";
+                // // Cancela a venda inteira
+                // venda.Status = "CANCELADA";
                 
-                // Restaura as quantidades de todos os produtos
-                foreach (var item in venda.Itens)
-                {
-                    item.Cancelado = true;
-                    var produto = await _productRepository.GetProductByIdAsync(item.IdProduto);
-                    if (produto != null)
-                    {
-                        produto.Quantidade += item.Quantidade;
-                        if (produto.Status == "INDISPONIVEL" && produto.Quantidade > 0)
-                        {
-                            produto.Status = "DISPONIVEL";
-                        }
-                        await _productRepository.UpdateProductAsync(produto);
-                    }
-                }
+                // // Restaura as quantidades de todos os produtos
+                // foreach (var item in venda.Itens)
+                // {
+                //     item.Cancelado = true;
+                //     var produto = await _productRepository.GetProductByIdAsync(item.IdProduto);
+                //     if (produto != null)
+                //     {
+                //         produto.Quantidade += item.Quantidade;
+                //         if (produto.Status == "INDISPONIVEL" && produto.Quantidade > 0)
+                //         {
+                //             produto.Status = "DISPONIVEL";
+                //         }
+                //         await _productRepository.UpdateProductAsync(produto);
+                //     }
+                // }
             }
 
             // Salva o cancelamento e atualiza a venda
@@ -218,8 +218,6 @@ namespace ViberLounge.Application.Services
                 var venda = await _saleRepository.GetSaleByIdAsync(id);
                 if (venda == null)
                     return null;
-
-                _logger.LogInformation("Venda {SaleId} encontrada com sucesso", id);
                 return _mapper.Map<SaleResponseDto>(venda);
             }catch (Exception ex)
             {

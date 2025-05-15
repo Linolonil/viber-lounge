@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using ViberLounge.Application.DTOs.Sale;
 using Microsoft.AspNetCore.Authorization;
 using ViberLounge.Application.Services.Interfaces;
+using ViberLounge.Infrastructure.Logging;
 
 namespace ViberLounge.API.Controllers;
 
@@ -12,9 +13,9 @@ namespace ViberLounge.API.Controllers;
 public class SaleController : ControllerBase
 {
     private readonly ISaleService _vendaService;
-    private readonly ILogger<SaleController> _logger;
+    private readonly ILoggerService _logger;
 
-    public SaleController(ISaleService vendaService, ILogger<SaleController> logger)
+    public SaleController(ISaleService vendaService, ILoggerService logger)
     {
         _vendaService = vendaService;
         _logger = logger;
@@ -28,12 +29,12 @@ public class SaleController : ControllerBase
     /// <response code="204">Se não houver vendas</response>
     /// <response code="401">Se o usuário não estiver autenticado</response>
     /// <response code="500">Se ocorrer um erro interno</response>
-    [HttpGet()]
+    [HttpGet]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(typeof(IEnumerable<SaleResponseFromDataDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetSaleFromData([FromQuery] SaleRequestFromDataDto saleFromData)
+    public async Task<IActionResult> GetAllSaleFromData([FromQuery] SaleRequestFromDataDto saleFromData)
     {
         _logger.LogInformation("Recebendo requisição para obter todas as vendas");
         
@@ -52,6 +53,44 @@ public class SaleController : ControllerBase
         {
             _logger.LogError(ex, "Erro ao obter vendas");
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Erro ao processar a requisição", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Obtém uma venda pelo ID
+    /// </summary>
+    /// <param name="id">ID da venda</param>
+    /// <returns>Venda encontrada</returns>
+    /// <response code="200">Retorna a venda solicitada</response>
+    /// <response code="404">Se a venda não for encontrada</response>
+    /// <response code="401">Se o usuário não estiver autenticado</response>
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(SaleResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetSaleById(int id)
+    {
+        _logger.LogInformation("Recebendo requisição para buscar venda {SaleId}", id);
+        try
+        {
+            if (id <= 0){
+                _logger.LogWarning("ID inválido fornecido: {SaleId}", id);
+                return BadRequest(new { message = "ID inválido" });
+            }
+            
+            var sale = await _vendaService.GetSaleByIdAsync(id);
+            
+            if (sale == null){
+                _logger.LogWarning("Venda não encontrada para o ID: {SaleId}", id);
+                return NotFound(new { message = "Venda não encontrada" });
+            }
+            _logger.LogInformation("Venda {SaleId} encontrada com sucesso", id);
+            return Ok(sale);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar venda {SaleId}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Erro ao buscar venda", error = ex.Message });
         }
     }
 
@@ -84,44 +123,6 @@ public class SaleController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Obtém uma venda pelo ID
-    /// </summary>
-    /// <param name="id">ID da venda</param>
-    /// <returns>Venda encontrada</returns>
-    /// <response code="200">Retorna a venda solicitada</response>
-    /// <response code="404">Se a venda não for encontrada</response>
-    /// <response code="401">Se o usuário não estiver autenticado</response>
-    [HttpGet("create/{id}")]
-    [ProducesResponseType(typeof(SaleResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetSaleById(int id)
-    {
-        _logger.LogInformation("Recebendo requisição para buscar venda {SaleId}", id);
-        try
-        {
-            if (id <= 0){
-                _logger.LogWarning("ID inválido fornecido: {SaleId}", id);
-                return BadRequest(new { message = "ID inválido" });
-            }
-            
-            var sale = await _vendaService.GetSaleByIdAsync(id);
-            
-            if (sale == null){
-                _logger.LogWarning("Venda não encontrada para o ID: {SaleId}", id);
-                return NotFound(new { message = "Venda não encontrada" });
-            }
-
-            _logger.LogInformation("Venda encontrada: {SaleId}", id);
-            return Ok(sale);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao buscar venda {SaleId}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Erro ao buscar venda", error = ex.Message });
-        }
-    }
 
     /// <summary>
     /// Cancela uma venda ou item específico

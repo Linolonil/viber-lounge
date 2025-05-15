@@ -14,8 +14,7 @@ namespace ViberLounge.Domain.Entities
         public virtual ICollection<VendaItem> Itens { get; set; }
         [Required]
         public double PrecoTotal { get; set; }
-        [Required]
-        public string? Status { get; set; } = "ATIVA";
+        public bool Cancelado { get; set; } = false;
         [Required]
         public string? FormaPagamento { get; set; }
         public virtual VendaCancelada? VendaCancelada { get; set; }

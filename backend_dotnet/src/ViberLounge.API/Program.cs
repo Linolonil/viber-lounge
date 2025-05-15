@@ -121,7 +121,6 @@ void configDependencyService(IServiceCollection services){
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<IProductService, ProductService>();
     builder.Services.AddScoped<ISaleService, SaleService>();
-    builder.Services.AddSingleton<ILoggerService, LoggerService>();
 }
 
 // Configuração dos repositórios
