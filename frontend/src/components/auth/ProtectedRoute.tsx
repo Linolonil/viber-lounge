@@ -9,21 +9,24 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  requireAdmin = false,
 }) => {
-  const { user, isInitializing, isAuthenticated } = useAuth();
 
-  if (isInitializing) {
-    return <div>Loading...</div>;
+  const { user, isLoadingLogin, loadingUser} = useAuth();
+
+  // Mostra um loading enquanto verifica o auth (evita flash de conteúdo)
+  if (isLoadingLogin || loadingUser ) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <span className="text-zinc-200 text-lg">Carregando...</span>
+      </div>
+    );
   }
 
-  if (!isAuthenticated || !user) {
+  // Se não há usuário no contexto (não autenticado)
+  if (!user) {
     return <Navigate to="/login" replace />;
-  }
+  };
 
-  if (requireAdmin && user.role !== 'ADMIN') {
-    return <Navigate to="/" replace />;
-  }
-
+  // Acesso permitido
   return <>{children}</>;
 };

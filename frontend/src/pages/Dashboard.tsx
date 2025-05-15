@@ -30,7 +30,7 @@ export default function Dashboard() {
     },
     retry: 3,
     retryDelay: 1000,
-    enabled: user?.role === 'admin' // Só executa a query se for admin
+    enabled: user?.role === 'ADMIN' 
   });
 
   const { data: traceContent, isLoading: isLoadingTrace, error: traceError } = useQuery({
@@ -54,7 +54,7 @@ export default function Dashboard() {
 
   // Atualizar dados quando a data mudar
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (user?.role === 'ADMIN') {
       queryClient.invalidateQueries({ queryKey: ['dashboard', dataAtual] });
     }
     queryClient.invalidateQueries({ queryKey: ['trace', dataAtual, user?.id] });
@@ -73,7 +73,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {user?.role === 'admin' && (
+      {user?.role === 'ADMIN' && (
         <>
           <div className="flex items-center justify-between">
             <div>
@@ -195,7 +195,7 @@ export default function Dashboard() {
         <CardHeader>
           <CardTitle className="text-white">Log de Vendas</CardTitle>
           <CardDescription>
-            {user?.role === 'admin' 
+            {user?.role === 'ADMIN' 
               ? 'Registro detalhado das vendas do dia' 
               : 'Suas vendas do dia'}
           </CardDescription>

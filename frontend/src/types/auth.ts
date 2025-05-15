@@ -10,24 +10,26 @@ export interface LoginCredentials {
   senha: string;
 }
 
-export interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  isInitializing: boolean;
-  isAuthenticated: boolean;
-  login: (email: string, senha: string) => Promise<void>;
-  logout: () => void;
-  register: (nome: string, email: string, senha: string) => Promise<void>;
-}
-
 export interface RegisterData {
   nome: string;
   email: string;
   senha: string;
-  role?: 'admin' | 'user';
+  role?: 'ADMIN' | 'USER';
 }
 
 export interface AuthResponse {
   token: string;
   user: User;
 } 
+
+
+export interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (email: string, senha: string) => Promise<void>;
+  logout: () => void;
+  isLoadingRegister: boolean;
+  loadingUser: boolean;
+  isLoadingLogin: boolean;
+  register: (nome: string, email: string, senha: string) => Promise<void>;
+}

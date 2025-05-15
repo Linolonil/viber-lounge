@@ -1,34 +1,60 @@
-import api from './ApiUrl';
+import axios from 'axios';
 import { AuthResponse, LoginCredentials, RegisterData, User } from '../types/auth';
+import apiClient from './ApiUrl';
 
-const authService = {
+const authService =
+{
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await api.post(`/Auth/login`, credentials);
-    const { token, user } = response.data;
-    
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
-    return { token, user };
+    try {
+      const response = await apiClient.post(`/Auth/login`, credentials);
+      const { token, user } = response.data;
+
+      return { token, user };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.log(error);
+        throw new Error(error.response?.data?.message || 'Servidor Indisponível no momento');
+      }
+      throw error;
+    }
   },
 
-  async register(data: RegisterData): Promise<void> {
-    await api.post(`/auth/register`, data);
+  async register(data: RegisterData): Promise<User> {
+    try {
+      const response = await apiClient.post(`/Auth/register`, data);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.log(error);
+        throw new Error(error.response?.data?.message || 'Servidor Indisponível no momento');
+      }
+      throw error;
+    }
   },
 
-   logout(): void {
+  async logout(): Promise<void> {
+    delete apiClient.defaults.headers.common['Authorization'];
+  },
+
+  async getCurrentUser(token: string): Promise<User | null> {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return null;
+
+      const response = await apiClient.get(`/AuthProfile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      return response.data;
+    } catch (error) {
+      
       localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      delete api.defaults.headers.common['Authorization'];
+      delete apiClient.defaults.headers.common['Authorization'];
+      return null;
+    }
   },
-
-  async getCurrentUser(): Promise<User> {
-    const response = await api.get(`/AuthProfile`);
-    console.log('User data:', response.data);
-    localStorage.setItem('user', JSON.stringify(response.data));
-    return response.data;
-  }
 };
 
-export default authService;
+export default authService; 

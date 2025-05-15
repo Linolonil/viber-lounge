@@ -1,99 +1,100 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { AuthContextType, User } from '../types/auth';
 import authService from '../services/authService';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
+import { toast } from 'sonner';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
 
-  // Query para obter o usuário atual
-  const { data: user, isLoading: isInitializing } = useQuery<User | null>({
-    queryKey: ['currentUser'],
+  // Gerenciar o token e o usuário no estado
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const [isLoadingRegister, setLoadingRegister] = useState<boolean>(false);
+
+  // 🔍 Buscar o usuário se o token existir
+  const { data: user, isLoading: loadingUser,  } = useQuery<User | null>({
+    queryKey: ['auth-user'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
       if (!token) return null;
-
-      try {
-        const user = await authService.getCurrentUser();
-        return user;
-      } catch (error) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        return null;
-      }
+      return authService.getCurrentUser(token);
     },
-    staleTime: 1000 * 60 * 30, // 30 minutos
+    enabled: !!token, 
+    staleTime: 1000 * 60 * 480, 
   });
-
-  // Query para obter o token (armazenado no localStorage)
-  const { data: token } = useQuery<string | null>({
-    queryKey: ['authToken'],
-    queryFn: () => localStorage.getItem('token'),
-    initialData: localStorage.getItem('token') || null,
-  });
-
-  // Mutação para login
+  
+  // Mutação de login
   const loginMutation = useMutation({
-    mutationFn: (credentials: { email: string; senha: string }) => 
-      authService.login(credentials),
-    onSuccess: (data) => {
-      queryClient.setQueryData(['currentUser'], data.user);
-      queryClient.setQueryData(['authToken'], data.token);
+    mutationFn: ({ email, senha }: { email: string; senha: string }) =>
+      authService.login({ email, senha }),
+    
+    onSuccess: ({ token }) => {
+      localStorage.setItem('token', token);
+      setToken(token);
+      queryClient.invalidateQueries({ queryKey: ['auth-user'] }); 
+      toast.success(`Login realizado com sucesso!`);
+    },
+    
+    onError: (err) => {
+      console.error('Erro no login', err);
+      toast.error(err?.message || 'Erro desconhecido');
+      throw err;
     },
   });
-
-  // Mutação para logout
-  const logoutMutation = useMutation({
-    mutationFn:  () => {
-      authService.logout();
-      return null;
-    },
-    onSuccess: () => {
-      queryClient.setQueryData(['currentUser'], null);
-      queryClient.setQueryData(['authToken'], null);
-      queryClient.clear();
-    },
-  });
-
-  // Mutação para registro
-  const registerMutation = useMutation({
-    mutationFn: (data: { nome: string; email: string; senha: string }) => 
-      authService.register(data),
-  });
-
-  // Funções de conveniência para o contexto
-  const login =  async (email: string, senha: string) => {
-   await  loginMutation.mutateAsync({ email, senha });
+  
+  const isLoadingLogin = loginMutation.status === 'pending';
+  
+  // Função de login
+  const login = async (email: string, senha: string) => {
+    await loginMutation.mutateAsync({ email, senha });
   };
-
-   const logout = (): void => {
-     logoutMutation.mutateAsync();
+  
+  // Função de logout
+  const logout = () => {
+    authService.logout();
+    setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    queryClient.setQueryData(['auth-user'], null);
+    toast.success('Logout realizado com sucesso!');
+    
   };
-
+  
+  // Função de registro
   const register = async (nome: string, email: string, senha: string) => {
-    await registerMutation.mutateAsync({ nome, email, senha });
+    try {
+      setLoadingRegister(true);
+      await authService.register({ nome, email, senha });
+      await login(email, senha); 
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+      throw error;
+    } finally {
+      setLoadingRegister(false);
+    }
   };
-
-  const isAuthenticated = !!user ;
-
+  
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      token, 
-      isInitializing,
-      isAuthenticated,
-      login, 
-      logout, 
-      register 
-    }}>
+    <AuthContext.Provider
+    value={{
+      user,
+      token,
+      isLoadingLogin,
+      loadingUser,
+      isLoadingRegister,
+      login,
+      logout,
+      register,
+    }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
+// Hook customizado para acessar o contexto
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
