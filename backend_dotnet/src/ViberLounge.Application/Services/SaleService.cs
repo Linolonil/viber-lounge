@@ -227,9 +227,25 @@ namespace ViberLounge.Application.Services
             }
         }
 
-        public Task<List<SaleResponseFromDataDto>> GetSalesByDateAsync(SaleRequestFromDataDto saleRequest)
+        public async Task<List<SaleResponseFromDataDto>> GetSalesByDateAsync(SaleRequestFromDataDto saleRequest)
         {
-            throw new NotImplementedException();
+            try
+            {
+                _logger.LogInformation("Iniciando busca de vendas entre {StartDate} e {EndDate}", saleRequest.InitialDateTime, saleRequest.FinalDateTime);
+
+                var sales = await _saleRepository.GetSalesByDateAsync(saleRequest.InitialDateTime, saleRequest.FinalDateTime);
+                if (sales == null || !sales.Any())
+                {
+                    _logger.LogWarning("Nenhuma venda encontrada entre {StartDate} e {EndDate}", saleRequest.InitialDateTime, saleRequest.FinalDateTime);
+                    return new List<SaleResponseFromDataDto>();
+                }
+                
+                return _mapper.Map<List<SaleResponseFromDataDto>>(sales);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
         }
     }
 }

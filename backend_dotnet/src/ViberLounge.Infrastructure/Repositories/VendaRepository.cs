@@ -146,5 +146,31 @@ namespace ViberLounge.Infrastructure.Repositories
                 return false;
             }
         }
+
+        public Task<List<Venda>> GetSalesByDateAsync(DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                var endDatePlusOneMs = endDate.AddMilliseconds(1);
+
+                _logger.LogInformation(
+                    "Buscando vendas entre {StartDate} e {EndDate}", 
+                    startDate.ToString("HH:mm:ss.fff"), 
+                    endDatePlusOneMs.ToString("HH:mm:ss.fff"));
+
+                return _context.Vendas
+                    .AsNoTracking()
+                    .Include(v => v.Itens)
+                    .Include(v => v.Usuario)
+                    .Include(v => v.VendaCancelada)
+                    .Where(v => v.CreatedAt >= startDate && v.CreatedAt < endDatePlusOneMs) // note o uso de "<"
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao buscar vendas entre {StartDate} e {EndDate}", startDate, endDate);
+                throw;
+            }
+        }
     }
 }

@@ -1,4 +1,3 @@
-// using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 
 namespace ViberLounge.Application.DTOs.Sale
@@ -17,29 +16,29 @@ namespace ViberLounge.Application.DTOs.Sale
         {
             var now = DateTime.Now;
 
-            // Permite que FinalDateTime seja “menor” que InitialDateTime 
-            // quando for no dia seguinte (ex.: 06:00 → 03:00 do dia+1)
-            var effectiveFinal = FinalDateTime < InitialDateTime
-                ? FinalDateTime.AddDays(1)
-                : FinalDateTime;
-
             // Não pode estar no futuro
             if (InitialDateTime > now)
                 yield return new ValidationResult(
                     "A data e hora inicial não podem ser no futuro",
-                    new[] { nameof(InitialDateTime) });
+                    [nameof(InitialDateTime)]);
 
-            if (effectiveFinal > now)
+            if (FinalDateTime > now)
                 yield return new ValidationResult(
                     "A data e hora final não podem ser no futuro",
-                    new[] { nameof(FinalDateTime) });
+                    [nameof(FinalDateTime)]);
+
+            // Verifica se a data inicial é menor que a data final
+            if (InitialDateTime > FinalDateTime)
+                yield return new ValidationResult(
+                    "A data e hora inicial deve ser menor que a data e hora final",
+                    [nameof(InitialDateTime), nameof(FinalDateTime)]);
 
             // Limita o intervalo a, por exemplo, 90 dias
-            var span = (effectiveFinal - InitialDateTime).TotalDays;
+            var span = (FinalDateTime - InitialDateTime).TotalDays;
             if (span > 90)
                 yield return new ValidationResult(
                     "O período máximo para consulta é de 90 dias",
-                    new[] { nameof(InitialDateTime), nameof(FinalDateTime) });
+                    [nameof(InitialDateTime), nameof(FinalDateTime)]);
         }
     }
 }

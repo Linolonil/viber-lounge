@@ -39,17 +39,13 @@ public class SaleController : ControllerBase
         
         try
         {
-            if (!ModelState.IsValid)
-            {
-                _logger.LogWarning("Requisição inválida: {errors}", ModelState);
-                return BadRequest(ModelState);
-            }
             var result = await _vendaService.GetSalesByDateAsync(saleFromData);
             if (result == null || !result.Any())
             {
-                _logger.LogWarning("Nenhuma venda encontrada");
+                _logger.LogWarning("Nenhuma venda encontrada entre {StartDate} e {EndDate}", saleFromData.InitialDateTime, saleFromData.FinalDateTime);
                 return NoContent();
             }
+            _logger.LogInformation("Retornou {venda} venda(s) entre {StartDate} e {EndDate}",result.Count,  saleFromData.InitialDateTime, saleFromData.FinalDateTime);
             return Ok(result);
         }
         catch (Exception ex)
