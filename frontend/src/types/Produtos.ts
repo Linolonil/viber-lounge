@@ -1,9 +1,10 @@
 export interface Produto {
   id: string;
-  nome: string;
+  descricao: string;
+  descricaoLonga: string;
   preco: number;
-  imagemUrl: string; // Base64 ou URL
-  quantidade: number; // Quantidade em estoque
+  imagemUrl: string;
+  quantidade: number; 
 }
 
 export interface ItemVenda {

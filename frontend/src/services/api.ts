@@ -1,5 +1,6 @@
 import { DadosGrafico, Produto, Venda, ItemVenda, FormaPagamento, PeriodoTrabalho } from "@/lib/types";
 import axios from "axios";
+import apiClient from "./ApiUrl";
 
 export const API_URL = import.meta.env.VITE_API_URL ;
 export const API_IMG = import.meta.env.VITE_API_IMG_URL;
@@ -26,81 +27,7 @@ const handleError = async (response: Response) => {
 };
 
 export const api = {
-  // Produtos
-  getProdutos: async (): Promise<Produto[]> => {
-    const response = await fetch(`${API_URL}/produtos`, {
-      headers: getAuthHeaders()
-    });
-    await handleError(response);
-    return response.json();
-  },
 
-  getProduto: async (id: string): Promise<Produto> => {
-    const response = await fetch(`${API_URL}/produtos/${id}`, {
-      headers: getAuthHeaders()
-    });
-    await handleError(response);
-    return response.json();
-  },
-
-  createProduto: async (produto: Omit<Produto, 'id'>): Promise<Produto> => {
-    const response = await fetch(`${API_URL}/produtos`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(produto),
-    });
-    await handleError(response);
-    return response.json();
-  },
-
-  createProdutoWithImage: async (formData: FormData): Promise<Produto> => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/produtos`, {
-      method: 'POST',
-      headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
-      body: formData
-    });
-    await handleError(response);
-    return response.json();
-  },
-
-  updateProduto: async (id: string, produto: Omit<Produto, 'id'>): Promise<Produto> => {
-    const response = await fetch(`${API_URL}/produtos/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(produto),
-    });
-    await handleError(response);
-    return response.json();
-  },
-
-  updateProdutoWithImage: async (id: string, formData: FormData): Promise<Produto> => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/produtos/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
-      body: formData
-    });
-    await handleError(response);
-    return response.json();
-  },
-
-  deleteProduto: async (id: string): Promise<void> => {
-    const response = await fetch(`${API_URL}/produtos/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    await handleError(response);
-  },
-
-  deleteImagemProduto: async (id: string) => {
-    const response = await axios.delete(`${API_URL}/produtos/${id}/imagem`);
-    return response.data;
-  },
 
   // Vendas
   getVendas: async (): Promise<Venda[]> => {

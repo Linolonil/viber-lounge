@@ -1,76 +1,80 @@
-import { Produto } from "@/lib/types";
+import { Produto } from "@/types/Produtos";
+import apiClient from "./ApiUrl";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const produtoService = {
+  async getAll(): Promise<Produto[]> {
+    try {
+      const response = await apiClient.get('/Product');
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar produtos da api ", { error });
+      throw error;
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Authorization': token ? `Bearer ${token}` : ''
-  };
+    }
+  },
+
+  async getById(id: string, token: string): Promise<Produto> {
+    const response = await apiClient.get(`/produtos/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  },
+
+  searchProdutos: async (query: string) => {
+    // Verifica se é somente números (id) ou contém letras (descrição)
+    const isOnlyNumbers = /^\d+$/.test(query);
+    console.log('isOnlyNumbers:', isOnlyNumbers);
+
+    let url = '';
+    if (isOnlyNumbers) {
+      // Pesquisa por id
+      url = `/Product/search?Id=${query}`;  // exemplo: busca por id direta
+    } else {
+      // Pesquisa por descrição (ou categoria)
+      url = `/Product/search?Descricao=${encodeURIComponent(query)}`;
+    }
+
+    try {
+      const response = await apiClient.get(url);
+      return response.data; 
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      throw error;
+    }
+  },
+
+  async create(produto: Omit<Produto, 'id'>): Promise<Produto> {
+    try {
+      const response = await apiClient.post('/Product/create', produto)
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao enviar produto para API:', error);
+      throw new Error('Erro ao criar produto');
+    }
+  },
+
+  async update(produto: Produto): Promise<Produto> {
+  try {
+    const response = await apiClient.put(`/Product/update`, produto);
+    return response.data;
+  } catch (error) {
+    console.error("Erro no service update:", error);
+    throw error; 
+  }
+},
+
+  async delete(id: string): Promise<string> {
+    try {
+      await apiClient.delete(`/Product/delete?id=${id}`);
+      return 'Produto deletado com sucesso';
+    } catch (error) {
+      console.error("Erro ao deletar produto da API", { error });
+      throw error;
+    }
+  }
+
 };
 
-export class ProdutoService {
-  static async getAll(): Promise<Produto[]> {
-    const response = await fetch(`${API_URL}/produtos`, {
-      headers: getAuthHeaders()
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erro ao buscar produtos');
-    }
-    return response.json();
-  }
-
-  static async getById(id: string): Promise<Produto> {
-    const response = await fetch(`${API_URL}/produtos/${id}`, {
-      headers: getAuthHeaders()
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erro ao buscar produto');
-    }
-    return response.json();
-  }
-
-  static async create(formData: FormData): Promise<Produto> {
-    const response = await fetch(`${API_URL}/produtos`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: formData
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erro ao cadastrar produto');
-    }
-
-    return response.json();
-  }
-
-  static async update(id: string, formData: FormData): Promise<Produto> {
-    const response = await fetch(`${API_URL}/produtos/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: formData
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erro ao atualizar produto');
-    }
-
-    return response.json();
-  }
-
-  static async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_URL}/produtos/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erro ao deletar produto');
-    }
-  }
-} 
+export default produtoService;

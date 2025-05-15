@@ -10,7 +10,7 @@ interface ProductImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 export function ProductImage({ src, alt, className, ...props }: ProductImageProps) {
   const [error, setError] = React.useState(false);
 
-  const defaultImage = '/images/no-product.png'; // Imagem padrão
+  const defaultImage = '/images/no-product.png'; // Imagem padrão 
 
   const handleError = () => {
     setError(true);
@@ -22,7 +22,7 @@ export function ProductImage({ src, alt, className, ...props }: ProductImageProp
       alt={alt}
       onError={handleError}
       className={cn(
-        'object-cover rounded-lg',
+        ' rounded-lg bg-white',
         className
       )}
       {...props}

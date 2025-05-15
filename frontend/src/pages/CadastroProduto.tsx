@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { generateId, ProdutoService } from "@/services/api";
+import { ProdutoService } from "@/services/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +7,16 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ImageIcon, Save, Loader2 } from "lucide-react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { apiClientImage } from "@/services/ApiUrl";
+import { Produto } from "@/types/Produtos";
+import { produtoController } from "@/controller/produtoController";
 
 export default function CadastroProduto() {
-  const [nome, setNome] = useState("");
-  const [preco, setPreco] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [descricaoLonga, setDescricaoLonga] = useState("");
   const [quantidade, setQuantidade] = useState("");
+  const [preco, setPreco] = useState("");
+  // state para imgs
   const [imagemFile, setImagemFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +71,8 @@ export default function CadastroProduto() {
   });
 
   const resetForm = () => {
-    setNome("");
+    setDescricao("");
+    setDescricaoLonga("");
     setPreco("");
     setQuantidade("");
     setImagemFile(null);
@@ -78,8 +84,8 @@ export default function CadastroProduto() {
   };
 
   const validateFields = () => {
-    if (!nome.trim()) {
-      toast.error("Informe o nome do produto");
+    if (!descricao.trim()) {
+      toast.error("Informe a descrição do produto");
       return false;
     }
 
@@ -103,23 +109,57 @@ export default function CadastroProduto() {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateFields()) return;
-    
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  if (!validateFields()) return;
+
+  setIsSubmitting(true);
+
+  try {
+    // 1. Upload da imagem
+    const uploadFormData = new FormData();
+    uploadFormData.append("image", imagemFile as File);
+
+    const uploadResponse = await apiClientImage.post("/api/upload", uploadFormData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+
+    const imageUrl = uploadResponse.data.imageUrl;
+
+    if (!imageUrl) {
+      toast.error("Erro ao fazer upload da imagem");
+      return;
+    }
+
+    // 2. Após upload, prepara os dados do produto
     const precoNumerico = parseFloat(preco.replace(",", "."));
     const quantidadeNumerica = parseInt(quantidade);
-    
-    const formData = new FormData();
-    formData.append('id', generateId());
-    formData.append('nome', nome.trim());
-    formData.append('preco', precoNumerico.toString());
-    formData.append('quantidade', quantidadeNumerica.toString());
-    formData.append('imagem', imagemFile as File);
-    
-    cadastrarProdutoMutation.mutate(formData);
-  };
+
+    const produtoData = {
+      descricao: descricao.trim(),
+      descricaoLonga: descricaoLonga.trim(),
+      preco: precoNumerico,
+      quantidade: quantidadeNumerica,
+      imagemUrl: imageUrl
+    };
+
+    // 3. Envia os dados do produto para a API
+    await produtoController.createProduto(produtoData);
+
+    toast.success("Produto cadastrado com sucesso!");
+    resetForm();
+
+  } catch (error) {
+    console.log(error);
+    toast.error("Erro ao cadastrar produto");
+    console.error(error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="space-y-6">
@@ -139,14 +179,27 @@ export default function CadastroProduto() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="nome" className="text-gray-200">
-                    Nome do Produto*
+                  <Label htmlFor="descricao" className="text-gray-200">
+                    Descrição do Produto*
                   </Label>
                   <Input
-                    id="nome"
+                    id="descricao"
                     placeholder="Ex: Gin Tônica"
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
+                    value={descricao}
+                    onChange={(e) => setDescricao(e.target.value)}
+                    className="bg-zinc-700 border-zinc-600 text-white"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="descricaoLonga" className="text-gray-200">
+                    Descrição longa do Produto*
+                  </Label>
+                  <Input
+                    id="descricaoLonga"
+                    placeholder="Ex: Bebida refrescante feita com gin, água tônica e limão, ideal para dias quentes e momentos especiais."
+                    value={descricaoLonga}
+                    onChange={(e) => setDescricaoLonga(e.target.value)}
                     className="bg-zinc-700 border-zinc-600 text-white"
                     disabled={isSubmitting}
                   />
