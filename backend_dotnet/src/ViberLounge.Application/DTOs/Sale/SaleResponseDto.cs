@@ -9,7 +9,7 @@ namespace ViberLounge.Application.DTOs.Sale
         public int UserId { get; set; }
         public double TotalPrice { get; set; }
         public string? PaymentType { get; set; }
-        public string? Status { get; set; }
+        public bool IsCanceled { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<SaleItemResponseDto> Items { get; set; } = new();
     }
