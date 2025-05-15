@@ -141,6 +141,7 @@ void configModelError(IServiceCollection services)
             var errors = context.ModelState
                 .SelectMany(ms => ms.Value!.Errors)
                 .Select(e => e.ErrorMessage)
+                .Distinct()
                 .ToList();
 
             return new BadRequestObjectResult(new { message = string.Join(" ", errors) });
