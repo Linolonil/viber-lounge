@@ -1,0 +1,65 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+
+namespace ViberLounge.Infrastructure.Services
+{
+    public class FileService : IFileService
+    {
+        private readonly IWebHostEnvironment _environment;
+        private readonly string _productImagesPath = "images";
+        private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+        private readonly long _maxFileSize = 5 * 1024 * 1024;
+
+        public FileService(IWebHostEnvironment environment)
+        {
+            _environment = environment;
+        }
+
+        public async Task<string> SaveFileAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return string.Empty;
+                
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!_allowedExtensions.Contains(extension))
+                throw new InvalidOperationException($"Tipo de arquivo não permitido. Extensões permitidas: {string.Join(", ", _allowedExtensions)}");
+
+            if (file.Length > _maxFileSize)
+                throw new InvalidOperationException($"Arquivo muito grande. Tamanho máximo permitido: {_maxFileSize / (1024 * 1024)}MB");
+
+            string fileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+            
+            string uploadsFolder = Path.Combine(_environment.WebRootPath, _productImagesPath);
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+            
+            string filePath = Path.Combine(uploadsFolder, fileName);
+            
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(fileStream);
+            }
+            
+            return $"/{_productImagesPath}/{fileName}";
+        }
+
+        public void DeleteFile(string fileUrl)
+        {
+            if (string.IsNullOrEmpty(fileUrl))
+                return;
+
+            try
+            {
+                string relativePath = fileUrl.TrimStart('/');
+                string fullPath = Path.Combine(_environment.WebRootPath, relativePath);
+                
+                if (File.Exists(fullPath))
+                    File.Delete(fullPath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao excluir arquivo: {ex.Message}");
+            }
+        }
+    }
+}

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace ViberLounge.Application.DTOs.Product
 {
@@ -13,9 +14,8 @@ namespace ViberLounge.Application.DTOs.Product
         [Required(ErrorMessage = "O preço do produto é obrigatório")]
         [Range(0.01, double.MaxValue, ErrorMessage = "O preço deve ser maior que zero")]
         public double Preco { get; set; }
-
         [Required(ErrorMessage = "A imagem do produto é obrigatória")]
-        public string? ImagemUrl { get; set; }
+        public IFormFile? ImagemFile { get; set; }
 
         [Required(ErrorMessage = "A quantidade do produto é obrigatória")]
         [RegularExpression(@"^\d{1,3}$", ErrorMessage = "A quantidade deve ser um número inteiro entre 0 e 999")]
