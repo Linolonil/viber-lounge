@@ -31,7 +31,20 @@ namespace ViberLounge.Infrastructure.Repositories
                 throw;
             }
         }
-
+        public async Task<VendaItem?> GetSaleItemByIdAsync(int id)
+        {
+            try{
+                return await _context.ItensVendas
+                    .AsNoTracking()
+                    .Include(i => i.Produto)
+                    .Include(i => i.Cancelamento)
+                    .FirstOrDefaultAsync(i => i.Id == id);
+            }catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao buscar venda com ID {SaleId}", id);
+                throw;
+            }
+        }
         public async Task<bool> CancelSaleAsync(Venda sale, VendaCancelada cancelamento)
         {
             _logger.LogInformation("Iniciando cancelamento da venda {SaleId}", sale.Id);

@@ -29,87 +29,100 @@ namespace ViberLounge.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<SaleResponseDto?> CancelSaleAsync(int id, CancelSaleDto cancelDto)
+        public async Task<SaleResponseDto?> CancelSaleAsync(CancelSaleDto cancelDto)
         {
-            _logger.LogInformation("Iniciando cancelamento da venda {SaleId}", id);
+            _logger.LogInformation("Iniciando cancelamento da venda {SaleId}", cancelDto.CancellationId);
 
-            var venda = await _saleRepository.GetSaleByIdAsync(id);
-            if (venda == null)
+            bool userExists = await _userRepository.UserExistsAsync(cancelDto.UserId);
+            if (!userExists)
             {
-                _logger.LogWarning("Venda {SaleId} não encontrada para cancelamento", id);
-                return null;
+                _logger.LogWarning("Tentativa de cancelar a venda, mas o usuário é inexistente {UserId}", cancelDto.UserId);
+                throw new Exception("Usuário não encontrado");
             }
 
-            if (venda.Cancelado)
+            Venda? venda = null;
+            VendaItem? vendaItem = null;
+            if (cancelDto.TipoCancelamento == "ITEM")
             {
-                _logger.LogWarning("Venda {SaleId} já está cancelada", id);
-                throw new Exception("Esta venda já está cancelada");
+                _logger.LogInformation("Iniciando cancelamento por ITEM pelo Id {SaleItemId}", cancelDto.CancellationId);
+                vendaItem = await _saleRepository.GetSaleItemByIdAsync(cancelDto.CancellationId);
+            }
+            else
+            {
+                _logger.LogInformation("Iniciando cancelamento por VENDA pelo Id {SaleId}", cancelDto.CancellationId);
+                venda = await _saleRepository.GetSaleByIdAsync(cancelDto.CancellationId);
+            }
+
+            if (venda == null && vendaItem == null)
+            {
+                _logger.LogWarning("Venda ou item não encontrado para cancelamento com ID {SaleId}", cancelDto.CancellationId);
+                throw new Exception("Venda ou item não encontrado");
             }
 
             var cancelamento = new VendaCancelada
             {
-                IdVenda = id,
+                IdVenda = cancelDto.CancellationId,
                 Motivo = cancelDto.Motivo,
                 TipoCancelamento = cancelDto.TipoCancelamento,
-                IdUsuario = venda.IdUsuario // Usuário que está cancelando
+                IdUsuario = cancelDto.UserId
             };
 
-            if (cancelDto.TipoCancelamento == "ITEM" && cancelDto.ItemId.HasValue)
+            if (cancelDto.TipoCancelamento == "ITEM")
             {
-                var item = venda.Itens.FirstOrDefault(i => i.Id == cancelDto.ItemId);
-                if (item == null)
-                {
-                    _logger.LogWarning("Item {ItemId} não encontrado na venda {SaleId}", cancelDto.ItemId, id);
-                    throw new Exception("Item não encontrado na venda");
-                }
+                // var item = venda.Itens.FirstOrDefault(i => i.Id == cancelDto.ItemId);
+                // if (item == null)
+                // {
+                //     _logger.LogWarning("Item {ItemId} não encontrado na venda {SaleId}", cancelDto.ItemId, id);
+                //     throw new Exception("Item não encontrado na venda");
+                // }
 
-                cancelamento.IdVendaItem = item.Id;
-                item.Cancelado = true;
+                // cancelamento.IdVendaItem = item.Id;
+                // item.Cancelado = true;
 
                 // Restaura a quantidade do produto
-                var produto = await _productRepository.GetProductByIdAsync(item.IdProduto);
-                if (produto != null)
-                {
-                    produto.Quantidade += item.Quantidade;
-                    if (produto.Status == "INDISPONIVEL" && produto.Quantidade > 0)
-                    {
-                        produto.Status = "DISPONIVEL";
-                    }
-                    await _productRepository.UpdateProductAsync(produto);
-                }
+                // var produto = await _productRepository.GetProductByIdAsync(item.IdProduto);
+                // if (produto != null)
+                // {
+                //     produto.Quantidade += item.Quantidade;
+                //     if (produto.Status == "INDISPONIVEL" && produto.Quantidade > 0)
+                //     {
+                //         produto.Status = "DISPONIVEL";
+                //     }
+                //     await _productRepository.UpdateProductAsync(produto);
+                // }
             }
             else
             {
-                // // Cancela a venda inteira
-                // venda.Status = "CANCELADA";
-                
-                // // Restaura as quantidades de todos os produtos
-                // foreach (var item in venda.Itens)
-                // {
-                //     item.Cancelado = true;
-                //     var produto = await _productRepository.GetProductByIdAsync(item.IdProduto);
-                //     if (produto != null)
-                //     {
-                //         produto.Quantidade += item.Quantidade;
-                //         if (produto.Status == "INDISPONIVEL" && produto.Quantidade > 0)
-                //         {
-                //             produto.Status = "DISPONIVEL";
-                //         }
-                //         await _productRepository.UpdateProductAsync(produto);
-                //     }
-                // }
-            }
+                venda!.Cancelado = true;
 
+                // Restaura as quantidades de todos os produtos
+                List<Produto> Updateprodutos = [];
+                foreach (var item in venda.Itens)
+                {
+                    item.Cancelado = true;
+                    var produto = await _productRepository.GetProductByIdAsync(item.IdProduto);
+                    if (produto != null)
+                    {
+                        produto.Quantidade += item.Quantidade;
+                        if (produto.Status == "INDISPONIVEL" && produto.Quantidade >= 0)
+                        {
+                            produto.Status = "DISPONIVEL";
+                        }
+                        Updateprodutos.Add(produto);
+                    }
+                }
+            }
+            return null;
             // Salva o cancelamento e atualiza a venda
-            var sucesso = await _saleRepository.CancelSaleAsync(venda, cancelamento);
-            if (!sucesso)
-            {
-                _logger.LogError(new Exception("Falha ao Cancelar a Venda"), "Erro ao cancelar venda {SaleId}", id);
-                throw new Exception("Erro ao processar o cancelamento");
-            }
+            // var sucesso = await _saleRepository.CancelSaleAsync(venda, cancelamento);
+            // if (!sucesso)
+            // {
+            //     _logger.LogError(new Exception("Falha ao Cancelar a Venda"), "Erro ao cancelar venda {SaleId}", cancelDto.CancellationId);
+            //     throw new Exception("Erro ao processar o cancelamento");
+            // }
 
-            _logger.LogInformation("Venda {SaleId} cancelada com sucesso", id);
-            return _mapper.Map<SaleResponseDto>(venda);
+            // _logger.LogInformation("Venda {SaleId} cancelada com sucesso",cancelDto.CancellationId);
+            // return _mapper.Map<SaleResponseDto>(venda);
         }
 
         public async Task<SaleResponseDto> CreateAllSaleAsync(CreateSaleDto saleDto)

@@ -134,17 +134,17 @@ public class SaleController : ControllerBase
     /// <response code="400">Se os dados do cancelamento forem inválidos</response>
     /// <response code="404">Se a venda não for encontrada</response>
     /// <response code="401">Se o usuário não estiver autenticado</response>
-    [HttpPut("{id}/cancel")]
+    [HttpPut("cancel")]
     [ProducesResponseType(typeof(SaleResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> CancelSale(int id, [FromBody] CancelSaleDto cancelDto)
+    public async Task<IActionResult> CancelSale([FromBody] CancelSaleDto cancelDto)
     {
-        _logger.LogInformation("Recebendo requisição para cancelar venda {SaleId}", id);
+        _logger.LogInformation("Recebendo requisição para cancelar venda {SaleId}", cancelDto.CancellationId);
         try
         {
-            var result = await _vendaService.CancelSaleAsync(id, cancelDto);
+            var result = await _vendaService.CancelSaleAsync(cancelDto);
             if (result == null)
                 return NotFound(new { message = "Venda não encontrada" });
 
@@ -152,7 +152,7 @@ public class SaleController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao cancelar venda {SaleId}", id);
+            _logger.LogError(ex, "Erro ao cancelar venda {SaleId}", cancelDto.CancellationId);
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Erro ao cancelar venda", error = ex.Message });
         }
     }
