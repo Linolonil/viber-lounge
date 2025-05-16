@@ -65,9 +65,6 @@ iisexpress/
 *.exe
 *.pdb
 
-# EF Core Migrations
-Migrations/
-
 # Publish output
 publish/
 
