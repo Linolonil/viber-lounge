@@ -1,5 +1,6 @@
 STARTUP_FOLDER=./src/ViberLounge.API
 INFRA_FOLDER=./src/ViberLounge.Infrastructure
+TEST_FOLDER=./src/ViberLounge.Tests
 
 clean:
 	dotnet clean $(STARTUP_FOLDER)
@@ -9,6 +10,9 @@ restore:
 
 build:
 	dotnet build $(STARTUP_FOLDER)
+
+test:
+	dotnet test $(TEST_FOLDER) 
 
 run:
 	dotnet run --project $(STARTUP_FOLDER)
