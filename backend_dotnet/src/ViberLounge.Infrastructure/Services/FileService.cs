@@ -6,7 +6,7 @@ namespace ViberLounge.Infrastructure.Services
     public class FileService : IFileService
     {
         private readonly IWebHostEnvironment _environment;
-        private readonly string _productImagesPath = "images";
+        private readonly string _productImagesPath = "images/product";
         private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
         private readonly long _maxFileSize = 5 * 1024 * 1024;
 
@@ -19,7 +19,28 @@ namespace ViberLounge.Infrastructure.Services
         {
             if (file == null || file.Length == 0)
                 return string.Empty;
-                
+
+            // if (string.IsNullOrEmpty(_environment.WebRootPath))
+            // {
+            //     // Use ContentRootPath como base se WebRootPath for nulo
+            //     string contentRoot = _environment.ContentRootPath;
+            //     string webRootPath = Path.Combine(contentRoot, "wwwroot");
+
+            //     // Criar diretório wwwroot se não existir
+            //     if (!Directory.Exists(webRootPath))
+            //         Directory.CreateDirectory(webRootPath);
+
+            //     // Hack para definir WebRootPath dinamicamente
+            //     var webRootField = _environment.GetType().GetField("_webRootPath",
+            //         System.Reflection.BindingFlags.Instance |
+            //         System.Reflection.BindingFlags.NonPublic);
+
+            //     if (webRootField != null)
+            //         webRootField.SetValue(_environment, webRootPath);
+            //     else
+            //         throw new InvalidOperationException("Não foi possível definir WebRootPath. Configure manualmente em Program.cs");
+            // }
+
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!_allowedExtensions.Contains(extension))
                 throw new InvalidOperationException($"Tipo de arquivo não permitido. Extensões permitidas: {string.Join(", ", _allowedExtensions)}");
