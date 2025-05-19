@@ -1,6 +1,7 @@
 using Bogus;
 using Microsoft.AspNetCore.Http;
 using ViberLounge.Domain.Entities;
+using ViberLounge.Application.DTOs.Sale;
 using ViberLounge.Application.DTOs.Product;
 
 namespace ViberLounge.Tests.TestUtils;
@@ -74,5 +75,13 @@ public static class FakeDataFactory
             ImagemFile = imagemFile,
             Quantidade = quantidade
         };
+    }
+    public static SaleRequestFromDataDto GenerateSaleRequestData()
+    {
+        var searchTerm = new Faker<SaleRequestFromDataDto>("pt_BR")
+            .RuleFor(d => d.InitialDateTime, d => d.Date.Past(30, DateTime.Now))
+            .RuleFor(d => d.FinalDateTime, d => d.Date.Past(30, DateTime.Now));
+
+        return searchTerm.Generate(1).First();      
     }
 }   
