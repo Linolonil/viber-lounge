@@ -1,18 +1,21 @@
 STARTUP_FOLDER=./src/ViberLounge.API
 INFRA_FOLDER=./src/ViberLounge.Infrastructure
 TEST_FOLDER=./src/ViberLounge.Tests
+SOLUTION=ViberLounge.sln
 
 clean:
-	dotnet clean $(STARTUP_FOLDER)
+	dotnet clean $(SOLUTION)
+	find . -type d -name 'bin' -exec rm -rf {} +
+	find . -type d -name 'obj' -exec rm -rf {} +
 
 restore:
-	dotnet restore $(STARTUP_FOLDER)
+	dotnet restore $(SOLUTION)
 
 build:
-	dotnet build $(STARTUP_FOLDER)
+	dotnet build $(SOLUTION)
 
 test:
-	dotnet test $(TEST_FOLDER) 
+	dotnet test $(TEST_FOLDER)
 
 run:
 	dotnet run --project $(STARTUP_FOLDER)
