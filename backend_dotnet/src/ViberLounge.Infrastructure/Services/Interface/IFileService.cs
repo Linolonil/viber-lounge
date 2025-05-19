@@ -5,5 +5,5 @@ namespace ViberLounge.Infrastructure.Services;
 public interface IFileService
 {
     Task<string> SaveFileAsync(IFormFile file);
-    void DeleteFile(string fileUrl);
+    bool DeleteFile(string fileUrl);
 }

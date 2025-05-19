@@ -148,17 +148,20 @@ namespace ViberLounge.Application.Services
             try{
                 var productExist = await _produtoRepository.GetProductByIdAsync(id);
                 if (productExist == null)
-                    return false;
-                    
-                if (!string.IsNullOrEmpty(productExist.ImagemUrl) &&
-                    productExist.ImagemUrl.StartsWith("/images/"))
+                    throw new Exception("Produto não encontrado");
+
+                var deletedProduct = await _produtoRepository.DeleteProductAsync(productExist);
+
+                if (deletedProduct.IsDeleted)
                 {
-                    _fileService.DeleteFile(productExist.ImagemUrl);
+                    if (!_fileService.DeleteFile(deletedProduct.ImagemUrl ?? string.Empty))
+                    {
+                        _logger.LogWarning("Imagem do produto com ID {id} não encontrada ou não é uma imagem válida.", id);  
+                    }else{
+                        _logger.LogInformation("Imagem do produto com ID {id} deletada com sucesso.", id);
+                    }
                 }
-
-                await _produtoRepository.DeleteProductAsync(productExist);
-                return true;
-
+                return deletedProduct.IsDeleted;
             }catch(Exception ex)
             {
                 throw new Exception(ex.Message);

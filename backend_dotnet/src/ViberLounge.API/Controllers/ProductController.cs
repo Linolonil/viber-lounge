@@ -134,7 +134,7 @@ public class ProductController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro ao atualizar produto com ID: {id}", product.Id!);
-            if (ex.Message.Contains("não encontrado"))
+            if (ex.Message.Contains("Não encontrado"))
                 return NotFound(new { message = ex.Message });
             return BadRequest(new { message = ex.Message });
         }

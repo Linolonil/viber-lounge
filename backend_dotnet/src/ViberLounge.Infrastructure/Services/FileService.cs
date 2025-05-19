@@ -64,22 +64,27 @@ namespace ViberLounge.Infrastructure.Services
             return $"/{_productImagesPath}/{fileName}";
         }
 
-        public void DeleteFile(string fileUrl)
+        public bool DeleteFile(string fileUrl)
         {
             if (string.IsNullOrEmpty(fileUrl))
-                return;
+                return false;
 
             try
             {
                 string relativePath = fileUrl.TrimStart('/');
                 string fullPath = Path.Combine(_environment.WebRootPath, relativePath);
-                
+
                 if (File.Exists(fullPath))
+                {
                     File.Delete(fullPath);
+                    return true;
+                }
+                return false;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Erro ao excluir arquivo: {ex.Message}");
+                return false;
             }
         }
     }
