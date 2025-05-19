@@ -15,7 +15,7 @@ namespace ViberLounge.Application.Services
         private readonly IFileService _fileService;
         private readonly IProdutoRepository _produtoRepository;
 
-        public ProductService(IMapper mapper, ILoggerService logger, IFileService fileService,  IProdutoRepository produtoRepository)
+        public ProductService(IMapper mapper, ILoggerService logger, IFileService fileService, IProdutoRepository produtoRepository)
         {
             _mapper = mapper;
             _logger = logger;
@@ -27,7 +27,7 @@ namespace ViberLounge.Application.Services
         {
             try
             {
-                bool hasId  = term.Id.HasValue;
+                bool hasId = term.Id.HasValue;
                 bool hasDesc = !string.IsNullOrWhiteSpace(term.Descricao);
 
                 if (!hasId && !hasDesc)
@@ -51,7 +51,8 @@ namespace ViberLounge.Application.Services
 
                     return list.Select(e => _mapper.Map<ProductDto>(e));
                 }
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw new Exception(ex.Message);
             }
@@ -60,7 +61,8 @@ namespace ViberLounge.Application.Services
         public async Task<List<ProductDto>> GetAllProductAsync(bool includeDeleted = false)
         {
             _logger.LogInformation("Buscando todos os produtos");
-            try{
+            try
+            {
                 var produtos = await _produtoRepository.GetAllProductAsync(includeDeleted);
                 if (produtos == null || !produtos.Any())
                     throw new Exception("Não há produtos cadastrados");
@@ -76,10 +78,11 @@ namespace ViberLounge.Application.Services
         public async Task<ProductDto?> CreateProductAsync(CreateProductDto product)
         {
             _logger.LogInformation("Criando produto com descrição: {descricao}", product.Descricao!);
-            try{
+            try
+            {
                 var produtoExist = await _produtoRepository.IsProductExists(product.Descricao!);
-                
-                if(produtoExist != null)
+
+                if (produtoExist != null)
                     throw new Exception("Produto já existe");
 
                 string imageUrl = string.Empty;
@@ -90,7 +93,8 @@ namespace ViberLounge.Application.Services
                 if (string.IsNullOrEmpty(imageUrl))
                     throw new Exception("Erro ao salvar a imagem do produto");
 
-                Produto produto = new (){
+                Produto produto = new()
+                {
                     Descricao = product.Descricao,
                     DescricaoLonga = product.DescricaoLonga,
                     Preco = Convert.ToDouble(product.Preco),
@@ -98,46 +102,39 @@ namespace ViberLounge.Application.Services
                     Quantidade = product.Quantidade,
                     Status = ProdutoStatusExtensions.ToProductStatus(product.Quantidade)
                 };
-                
+
                 Produto? produtoCriado = await _produtoRepository.CreateProductAsync(produto);
                 return _mapper.Map<ProductDto>(produtoCriado);
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw new Exception(ex.Message);
             }
         }
-        
+
         public async Task<ProductDto> UpdateProductAsync(UpdateProductDto product)
         {
             _logger.LogInformation("Atualizando produto com ID: {id}", product.Id);
-            try{
+            try
+            {
                 var productExist = await _produtoRepository.GetProductByIdAsync(product.Id);
                 if (productExist == null)
-                    throw new Exception($"Produto com ID {product.Id} não encontrado.");
-                
-                string imageUrl = string.Empty;
-                if (product.ImagemFile != null && product.ImagemFile.Length > 0)
-                {
-                    if (!string.IsNullOrEmpty(productExist.ImagemUrl) && 
-                        productExist.ImagemUrl.StartsWith("/images/"))
-                    {
-                        _fileService.DeleteFile(productExist.ImagemUrl);
-                    }
-                    
-                    imageUrl = await _fileService.SaveFileAsync(product.ImagemFile);
-                }
-                    
+                    throw new Exception("Produto não encontrado");
+
+                string imageUrl = await ProcessarImagemProduto(productExist, product);
+
                 productExist.Descricao = product.Descricao;
                 productExist.DescricaoLonga = product.DescricaoLonga;
                 productExist.Preco = Convert.ToDouble(product.Preco);
-                productExist.ImagemUrl = imageUrl ?? productExist.ImagemUrl;
+                productExist.ImagemUrl = imageUrl;
                 productExist.Quantidade = product.Quantidade;
                 productExist.Status = ProdutoStatusExtensions.ToProductStatus(product.Quantidade);
-                
+
                 var updatedProduct = await _produtoRepository.UpdateProductAsync(productExist);
-                
+
                 return _mapper.Map<ProductDto>(updatedProduct);
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw new Exception(ex.Message);
             }
@@ -145,7 +142,8 @@ namespace ViberLounge.Application.Services
         public async Task<bool> DeleteProductAsync(int id)
         {
             _logger.LogInformation("Removendo produto com ID: {id}", id);
-            try{
+            try
+            {
                 var productExist = await _produtoRepository.GetProductByIdAsync(id);
                 if (productExist == null)
                     throw new Exception("Produto não encontrado");
@@ -156,16 +154,52 @@ namespace ViberLounge.Application.Services
                 {
                     if (!_fileService.DeleteFile(deletedProduct.ImagemUrl ?? string.Empty))
                     {
-                        _logger.LogWarning("Imagem do produto com ID {id} não encontrada ou não é uma imagem válida.", id);  
-                    }else{
+                        _logger.LogWarning("Imagem do produto com ID {id} não encontrada ou não é uma imagem válida.", id);
+                    }
+                    else
+                    {
                         _logger.LogInformation("Imagem do produto com ID {id} deletada com sucesso.", id);
                     }
                 }
                 return deletedProduct.IsDeleted;
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        private async Task<string> ProcessarImagemProduto(Produto produtoExistente, UpdateProductDto produtoAtualizado)
+        {
+            if (produtoAtualizado.ImagemFile == null || produtoAtualizado.ImagemFile.Length == 0)
+            {
+                _logger.LogInformation("Nenhuma nova imagem fornecida para o produto ID {id}, mantendo a existente.", produtoAtualizado.Id);
+                return produtoExistente.ImagemUrl ?? string.Empty;
+            }
+            
+            if (!string.IsNullOrEmpty(produtoExistente.ImagemUrl))
+            {
+                if (!_fileService.DeleteFile(produtoExistente.ImagemUrl))
+                {
+                    _logger.LogWarning("Falha ao excluir a imagem anterior do produto ID {id}", produtoAtualizado.Id);
+                    throw new Exception("Falha ao excluir a imagem anterior do produto ID");
+                }
+                else
+                {
+                    _logger.LogInformation("Imagem anterior do produto ID {id} excluída com sucesso", produtoAtualizado.Id);
+                }
+            }
+            
+            string novaImagemUrl = await _fileService.SaveFileAsync(produtoAtualizado.ImagemFile);
+            
+            if (string.IsNullOrEmpty(novaImagemUrl) || !novaImagemUrl.Contains("images/product"))
+            {
+                _logger.LogError(new Exception("Falha ao salvar a nova imagem para o produto ID {id}"), "Falha ao salvar a nova imagem para o produto ID {id}", produtoAtualizado.Id);
+                throw new Exception("Não foi possível salvar a imagem do produto.");
+            }
+            
+            _logger.LogInformation("Nova imagem salva com sucesso para o produto ID {id}", produtoAtualizado.Id);
+            return novaImagemUrl;
         }
     }
 }
