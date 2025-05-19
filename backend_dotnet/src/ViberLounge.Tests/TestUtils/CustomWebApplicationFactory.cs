@@ -13,7 +13,6 @@ namespace ViberLounge.Tests.TestUtils
 
     public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup>, IDisposable where TStartup : class
     {
-        private IServiceScope? _scope;
         private string _databaseName;
         private readonly string _environmentName;
         private IServiceProvider? _serviceProvider;
@@ -80,7 +79,7 @@ namespace ViberLounge.Tests.TestUtils
             {
                 throw new InvalidOperationException("Service provider is not initialized.");
             }
-            
+
             using var scope = _serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             db.RemoveRange(db.ChangeTracker.Entries().Select(e => e.Entity));
@@ -93,10 +92,6 @@ namespace ViberLounge.Tests.TestUtils
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
-            {
-                _scope?.Dispose();
-            }
             base.Dispose(disposing);
         }
     }
