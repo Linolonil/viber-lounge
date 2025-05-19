@@ -15,7 +15,7 @@ public static class FakeDataFactory
             .RuleFor(p => p.DescricaoLonga, f => f.Lorem.Paragraph(2))
             .RuleFor(p => p.Preco, f => f.Random.Double(1, 100))
             .RuleFor(p => p.ImagemUrl, f => f.Image.PicsumUrl())
-            .RuleFor(p => p.Quantidade, f => status == 0 ? 0 : f.Random.Int(0, 100)+ 10)
+            .RuleFor(p => p.Quantidade, f => status == 0 ? 0 : f.Random.Int(0, 100) + 10)
             .RuleFor(p => p.Status, f => ProdutoStatusExtensions.ToProductStatus(status))
             .RuleFor(p => p.VendaItens, f => new List<VendaItem>());
 
@@ -32,13 +32,13 @@ public static class FakeDataFactory
 
         return createProductDto.Generate(quantidade);
     }
-    
-    private static IFormFile GetRandomImageFile()
+
+    public static IFormFile GetRandomImageFile()
     {
         var faker = new Faker();
         var fileName = faker.System.FileName("webp");
         var contentType = "image/webp";
-        var imageBytes = faker.Random.Bytes(66108); 
+        var imageBytes = faker.Random.Bytes(66108);
 
         var stream = new MemoryStream(imageBytes);
         stream.Position = 0;
@@ -46,6 +46,33 @@ public static class FakeDataFactory
         {
             Headers = new HeaderDictionary(),
             ContentType = contentType
+        };
+    }
+    public static SearchProductDto GenerateProductWithIdOrDescription(int? id = null, string? descricao = null)
+    {
+        var searchTerm = new Faker<SearchProductDto>("pt_BR")
+            .RuleFor(p => p.Id, f => id)
+            .RuleFor(p => p.Descricao, f => descricao);
+
+        return searchTerm.Generate(1).First();
+    }
+    public static UpdateProductDto GenerateUpdateProductDto(
+        int id,
+        string descricao,
+        string descricaoLonga,
+        double preco,
+        IFormFile imagemFile,
+        int quantidade
+    )
+    {
+        return new UpdateProductDto
+        {
+            Id = id,
+            Descricao = descricao,
+            DescricaoLonga = descricaoLonga,
+            Preco = preco,
+            ImagemFile = imagemFile,
+            Quantidade = quantidade
         };
     }
 }   
