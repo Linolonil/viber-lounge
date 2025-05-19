@@ -7,7 +7,7 @@ namespace ViberLounge.Tests.TestUtils;
 
 public static class FakeDataFactory
 {
-    public static IEnumerable<Produto> GetFakeProducts(int quantidade = 1)
+    public static IEnumerable<Produto> GetFakeProducts(int quantidade = 1, int status = 1)
     {
         var product = new Faker<Produto>("pt_BR")
             .RuleFor(p => p.Id, f => f.IndexFaker + 1)
@@ -15,7 +15,8 @@ public static class FakeDataFactory
             .RuleFor(p => p.DescricaoLonga, f => f.Lorem.Paragraph(2))
             .RuleFor(p => p.Preco, f => f.Random.Double(1, 100))
             .RuleFor(p => p.ImagemUrl, f => f.Image.PicsumUrl())
-            .RuleFor(p => p.Status, f => ProdutoStatusExtensions.ToProductStatus(f.Random.Int(0, 100)))
+            .RuleFor(p => p.Quantidade, f => status == 0 ? 0 : f.Random.Int(0, 100)+ 10)
+            .RuleFor(p => p.Status, f => ProdutoStatusExtensions.ToProductStatus(status))
             .RuleFor(p => p.VendaItens, f => new List<VendaItem>());
 
         return product.Generate(quantidade);
