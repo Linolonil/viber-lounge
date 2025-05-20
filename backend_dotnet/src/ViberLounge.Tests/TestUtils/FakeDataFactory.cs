@@ -118,12 +118,12 @@ public static class FakeDataFactory
             .RuleFor(p => p.isCanceled, f => isCanceled)
             .RuleFor(p => p.CreatedAt, f => f.Date.Past(30, DateTime.Now))
             .RuleFor(p => p.UpdatedAt, f => f.Date.Past(30, DateTime.Now))
-            .RuleFor(p => p.Items, f => GetFakeSaleItems(quantitySaleItem));
+            .RuleFor(p => p.Items, f => GenerateSaleItems(quantitySaleItem));
 
 
         return sale.Generate(quantitySaleResponse);
     }
-    public static IEnumerable<SaleItemResponseFromData> GetFakeSaleItems(
+    public static IEnumerable<SaleItemResponseFromData> GenerateSaleItems(
         int quantidade = 1,
         bool isCanceled = false)
     {
@@ -138,6 +138,31 @@ public static class FakeDataFactory
 
         return saleItem.Generate(quantidade);
     }
+
+    public static IEnumerable<CreateSaleDto> GenerateRequestCreateSaleDto(int quantitySale = 1, int quantitySaleitems = 1)
+    {
+        var saleItem = new Faker<CreateSaleDto>("pt_BR")
+            .RuleFor(p => p.CustomerName, f => f.Name.FullName())
+            .RuleFor(p => p.UserId, f => f.IndexFaker + 1)
+            .RuleFor(p => p.TotalPrice, f => f.Random.Double(1, 100))
+            .RuleFor(p => p.PaymentType, f => f.PickRandom("PIX", "DEBITO", "CREDITO", "DINHEIRO"))
+            .RuleFor(p => p.Items, f => GenerateSaleitems(quantitySaleitems));
+
+        return saleItem.Generate(quantitySale);
+    }
+    public static IEnumerable<Saleitems> GenerateSaleitems(int quantidade = 1)
+    {
+        if (quantidade == 0)
+            return new List<Saleitems>();
+
+        var saleItem = new Faker<Saleitems>("pt_BR")
+            .RuleFor(p => p.ProductId, f => f.IndexFaker + 1)
+            .RuleFor(p => p.Quantity, f => f.Random.Int(1, 10))
+            .RuleFor(p => p.Subtotal, f => f.Random.Int(1, 10));
+
+        return saleItem.Generate(quantidade);
+    }
+
     // Usuario
     public static IEnumerable<Usuario> GetFakeUsers(int quantidade = 1)
     {

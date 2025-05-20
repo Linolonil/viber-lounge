@@ -125,7 +125,7 @@ namespace ViberLounge.Application.Services
             // return _mapper.Map<SaleResponseDto>(venda);
         }
 
-        public async Task<SaleResponseDto> CreateAllSaleAsync(CreateSaleDto saleDto)
+        public async Task<SaleResponseDto> CreateSaleAsync(CreateSaleDto saleDto)
         {
             _logger.LogInformation("Iniciando criação de venda para usuário {UserId}", saleDto.UserId);
 

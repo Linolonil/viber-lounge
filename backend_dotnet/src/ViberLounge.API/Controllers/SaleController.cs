@@ -113,7 +113,7 @@ public class SaleController : ControllerBase
         _logger.LogInformation("Recebendo requisição para criar venda");
         try
         {
-            var result = await _vendaService.CreateAllSaleAsync(saleDto);
+            var result = await _vendaService.CreateSaleAsync(saleDto);
             return CreatedAtAction(nameof(GetSaleById), new { id = result.Id }, result);
         }
         catch (Exception ex)
