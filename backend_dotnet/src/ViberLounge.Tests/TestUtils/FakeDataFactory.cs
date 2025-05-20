@@ -85,8 +85,69 @@ public static class FakeDataFactory
 
         return searchTerm.Generate(1).First();
     }
+    public static Produto GerenateProductValid(
+        double? price = null,
+        int? quantity = null,
+        int stockStatus = 1)
+    {
+        var faker = new Faker<Produto>("pt_BR")
+            .RuleFor(p => p.Id, f => f.IndexFaker + 1)
+            .RuleFor(p => p.Descricao, f => f.Commerce.ProductName())
+            .RuleFor(p => p.DescricaoLonga, f => f.Lorem.Paragraph(2))
+            .RuleFor(p => p.Preco, f => price ?? Math.Round(f.Random.Double(1, 100), 2))
+            .RuleFor(p => p.ImagemUrl, f => f.Image.PicsumUrl())
+            .RuleFor(p => p.Quantidade, f => quantity ?? f.Random.Int(0, 100) + 10)
+            .RuleFor(p => p.Status, f => ProdutoStatusExtensions.ToProductStatus(stockStatus))
+            .RuleFor(p => p.VendaItens, f => new List<VendaItem>());
 
+        Produto produto = faker.Generate();
+        return produto;
+    }
     // Mocks de Vendas
+    public static Venda GenerateVendaValid(
+        int? idUsuario = null,
+        double? precoTotal = null,
+        bool cancelado = false,
+        bool isDeleted = false)
+    {
+        var faker = new Faker<Venda>("pt_BR")
+            .RuleFor(p => p.Id, f => f.IndexFaker + 1)
+            .RuleFor(p => p.NomeCliente, f => f.Name.FullName())
+            .RuleFor(p => p.IdUsuario, f => idUsuario ?? f.IndexFaker + 1)
+            .RuleFor(p => p.PrecoTotal, f => precoTotal ?? Math.Round(f.Random.Double(1, 100), 2))
+            .RuleFor(p => p.FormaPagamento, f => f.PickRandom("PIX", "DEBITO", "CREDITO", "DINHEIRO"))
+            .RuleFor(v => v.Cancelado, f => cancelado)
+            .RuleFor(d => d.IsDeleted, f => isDeleted)
+            .RuleFor(u => u.Usuario, f => new Usuario())
+            .RuleFor(p => p.CreatedAt, f => f.Date.Past(30, DateTime.Now))
+            .RuleFor(p => p.UpdatedAt, f => f.Date.Past(30, DateTime.Now));
+
+        Venda venda = faker.Generate();
+        return venda;
+    }
+    public static VendaItem GenerateVendaItemValid(
+        int? idVenda = null,
+        int? idProduto = null,
+        double? quantidade = null,
+        double? subtotal = null,
+        bool cancelado = false)
+    {
+        var faker = new Faker<VendaItem>("pt_BR")
+            .RuleFor(p => p.Id, f => f.IndexFaker + 1)
+            .RuleFor(p => p.IdVenda, f => idVenda ?? f.IndexFaker + 1)
+            .RuleFor(p => p.IdProduto, f => idProduto ?? f.Random.Int(0, 100) + 10)
+            .RuleFor(p => p.Quantidade, f => quantidade ?? f.Random.Double(1, 100))
+            .RuleFor(p => p.Subtotal, f => subtotal ?? Math.Round(f.Random.Double(1, 100), 2))
+            .RuleFor(p => p.Cancelado, f => cancelado)
+            .RuleFor(p => p.Venda, f => new Venda())
+            .RuleFor(p => p.Produto, f => new Produto())
+            .RuleFor(p => p.Cancelamento, f => new VendaCancelada())
+            .RuleFor(p => p.CreatedAt, f => f.Date.Past(30, DateTime.Now))
+            .RuleFor(p => p.UpdatedAt, f => f.Date.Past(30, DateTime.Now));
+
+        VendaItem produto = faker.Generate();
+        return produto;
+    }
     public static IEnumerable<Venda> GetFakeSales(
         int quantidade = 1,
         bool isCanceled = false)
@@ -95,7 +156,7 @@ public static class FakeDataFactory
             .RuleFor(p => p.Id, f => f.IndexFaker + 1)
             .RuleFor(p => p.NomeCliente, f => f.Name.FullName())
             .RuleFor(p => p.IdUsuario, f => GetFakeUsers().First().Id)
-            .RuleFor(p => p.PrecoTotal, f => f.Random.Double(1, 100))
+            .RuleFor(p => p.PrecoTotal, f => Math.Round(f.Random.Double(1, 100), 2))
             .RuleFor(p => p.Cancelado, f => isCanceled)
             .RuleFor(p => p.FormaPagamento, f => f.PickRandom("PIX", "DEBITO", "CREDITO", "DINHEIRO"))
             .RuleFor(p => p.CreatedAt, f => f.Date.Past(30, DateTime.Now))
@@ -113,7 +174,7 @@ public static class FakeDataFactory
             .RuleFor(p => p.CustomerName, f => f.Name.FullName())
             .RuleFor(p => p.UserId, f => f.IndexFaker + 1)
             .RuleFor(p => p.EmployeName, f => f.Name.FullName())
-            .RuleFor(p => p.TotalSalePrice, f => f.Random.Double(1, 100))
+            .RuleFor(p => p.TotalSalePrice, f => Math.Round(f.Random.Double(1, 100), 2))
             .RuleFor(p => p.PaymentType, f => f.PickRandom("PIX", "DEBITO", "CREDITO", "DINHEIRO"))
             .RuleFor(p => p.isCanceled, f => isCanceled)
             .RuleFor(p => p.CreatedAt, f => f.Date.Past(30, DateTime.Now))
@@ -132,19 +193,46 @@ public static class FakeDataFactory
             .RuleFor(p => p.ProductId, f => f.IndexFaker + 1)
             .RuleFor(p => p.Quantity, f => f.Random.Int(1, 10))
             .RuleFor(p => p.isCanceled, f => isCanceled)
-            .RuleFor(p => p.TotalItemPrice, f => f.Random.Double(1, 100))
+            .RuleFor(p => p.TotalItemPrice, f => Math.Round(f.Random.Double(1, 100), 2))
             .RuleFor(p => p.CreatedAt, f => f.Date.Past(30, DateTime.Now))
             .RuleFor(p => p.UpdatedAt, f => f.Date.Past(30, DateTime.Now));
 
         return saleItem.Generate(quantidade);
     }
+    public static CreateSaleDto GenerateSaleDtoValid(
+        int? userId = null,
+        double? totalPrice = null)
+    {
+        var faker = new Faker<CreateSaleDto>("pt_BR")
+            .RuleFor(p => p.CustomerName, f => f.Name.FullName())
+            .RuleFor(p => p.UserId, f => userId ?? f.IndexFaker + 1)
+            .RuleFor(p => p.TotalPrice, f => totalPrice ?? Math.Round(f.Random.Double(1, 100), 2))
+            .RuleFor(p => p.PaymentType, f => f.PickRandom("PIX", "DEBITO", "CREDITO", "DINHEIRO"))
+            .RuleFor(p => p.Items, f => new List<Saleitems>());
 
+        CreateSaleDto produto = faker.Generate();
+        return produto;
+    }
+    public static Saleitems GenerateSaleItemsValid(
+        int? productId = null,
+        int? quantity = null,
+        double? subtotal = null)
+    {
+        var faker = new Faker<Saleitems>("pt_BR")
+            .RuleFor(p => p.ProductId, f => productId ?? f.IndexFaker + 1)
+            .RuleFor(p => p.Quantity, f => quantity ?? f.Random.Int(1, 10))
+            .RuleFor(p => p.Subtotal, f => subtotal ?? Math.Round(f.Random.Double(1, 100), 2));
+
+        Saleitems produto = faker.Generate();
+        return produto;
+    }
+    
     public static IEnumerable<CreateSaleDto> GenerateRequestCreateSaleDto(int quantitySale = 1, int quantitySaleitems = 1)
     {
         var saleItem = new Faker<CreateSaleDto>("pt_BR")
             .RuleFor(p => p.CustomerName, f => f.Name.FullName())
             .RuleFor(p => p.UserId, f => f.IndexFaker + 1)
-            .RuleFor(p => p.TotalPrice, f => f.Random.Double(1, 100))
+            .RuleFor(p => p.TotalPrice, f => Math.Round(f.Random.Double(1, 100), 2))
             .RuleFor(p => p.PaymentType, f => f.PickRandom("PIX", "DEBITO", "CREDITO", "DINHEIRO"))
             .RuleFor(p => p.Items, f => GenerateSaleitems(quantitySaleitems));
 

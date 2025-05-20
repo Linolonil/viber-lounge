@@ -16,9 +16,9 @@ namespace ViberLounge.Application.Services
         private readonly IMapper _mapper;
 
         public SaleService(
-            IVendaRepository saleRepository, 
-            IUsuarioRepository userRepository, 
-            IProdutoRepository productRepository, 
+            IVendaRepository saleRepository,
+            IUsuarioRepository userRepository,
+            IProdutoRepository productRepository,
             ILoggerService logger,
             IMapper mapper)
         {
@@ -125,6 +125,141 @@ namespace ViberLounge.Application.Services
             // return _mapper.Map<SaleResponseDto>(venda);
         }
 
+        public async Task<SaleResponseDto?> GetSaleByIdAsync(int id)
+        {
+            _logger.LogInformation("Iniciando busca pela venda {SaleId}", id);
+            try
+            {
+
+                var venda = await _saleRepository.GetSaleByIdAsync(id);
+                if (venda == null)
+                    return null;
+                return _mapper.Map<SaleResponseDto>(venda);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<List<SaleResponseFromDataDto>> GetSalesByDateAsync(SaleRequestFromDataDto saleRequest)
+        {
+            try
+            {
+                _logger.LogInformation("Iniciando busca de vendas entre {StartDate} e {EndDate}", saleRequest.InitialDateTime, saleRequest.FinalDateTime);
+
+                var sales = await _saleRepository.GetSalesByDateAsync(saleRequest.InitialDateTime, saleRequest.FinalDateTime);
+                if (sales == null || !sales.Any())
+                {
+                    _logger.LogWarning("Nenhuma venda encontrada entre {StartDate} e {EndDate}", saleRequest.InitialDateTime, saleRequest.FinalDateTime);
+                    return new List<SaleResponseFromDataDto>();
+                }
+
+                return _mapper.Map<List<SaleResponseFromDataDto>>(sales);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+        // public async Task<SaleResponseDto> CreateSaleAsync(CreateSaleDto saleDto)
+        // {
+        //     _logger.LogInformation("Iniciando criação de venda para usuário {UserId}", saleDto.UserId);
+
+        //     if (saleDto.Items == null || saleDto.Items.Count == 0)
+        //     {
+        //         _logger.LogWarning("Tentativa de criar venda sem itens para usuário {UserId}", saleDto.UserId);
+        //         throw new Exception("Nenhum item informado na venda");
+        //     }
+
+        //     bool userExists = await _userRepository.UserExistsAsync(saleDto.UserId);
+        //     if (!userExists)
+        //     {
+        //         _logger.LogWarning("Tentativa de criar venda para usuário inexistente {UserId}", saleDto.UserId);
+        //         throw new Exception("Usuário não encontrado");
+        //     }
+
+        //     var groupedItems = saleDto.Items
+        //         .GroupBy(item => item.ProductId)
+        //         .Select(group => new
+        //         {
+        //             ProductId = group.Key,
+        //             Quantity = group.Sum(item => item.Quantity),
+        //             Subtotal = group.Sum(item => item.Subtotal)
+        //         })
+        //         .ToList();
+
+        //     _logger.LogDebug("Itens agrupados: {GroupedItemsCount} produtos únicos", groupedItems.Count);
+
+        //     var sale = new Venda
+        //     {
+        //         NomeCliente = saleDto.CustomerName ?? "NAO_INFORMADO",
+        //         IdUsuario = saleDto.UserId,
+        //         PrecoTotal = Convert.ToDouble(saleDto.TotalPrice!),
+        //         FormaPagamento = saleDto.PaymentType,
+        //     };
+
+        //     _logger.LogDebug("Venda criada com total de {TotalPrice} e forma de pagamento {PaymentType}", sale.PrecoTotal, sale.FormaPagamento!);
+
+        //     var saleItems = new List<VendaItem>();
+        //     var productsToUpdate = new List<Produto>();
+
+        //     foreach (var groupedItem in groupedItems)
+        //     {
+        //         var product = await _productRepository.GetProductByIdAndAvailableStatus(groupedItem.ProductId);
+        //         if (product == null || product!.Quantidade < groupedItem.Quantity)
+        //         {
+        //             _logger.LogWarning("Produto {ProductId} não encontrado ou quantidade insuficiente. Quantidade solicitada: {Quantity}, Disponível: {Available}", groupedItem.ProductId, groupedItem.Quantity, product?.Quantidade ?? 0);
+        //             throw new Exception("Nenhum item válido para salvar.");
+        //         }
+
+        //         product.Quantidade -= groupedItem.Quantity;
+        //         if (product.Quantidade == 0)
+        //         {
+        //             product.Status = "INDISPONIVEL";
+        //             _logger.LogInformation("Produto {ProductId} ficou indisponível após a venda", product.Id);
+        //         }
+
+        //         productsToUpdate.Add(product);
+
+        //         saleItems.Add(new VendaItem
+        //         {
+        //             IdProduto = groupedItem.ProductId,
+        //             Quantidade = groupedItem.Quantity,
+        //             Subtotal = Convert.ToDouble(groupedItem.Subtotal)
+        //         });
+
+        //         _logger.LogDebug("Item agrupado adicionado à venda: Produto {ProductId}, Quantidade {Quantity}, Subtotal {Subtotal}", 
+        //             groupedItem.ProductId, groupedItem.Quantity, groupedItem.Subtotal);
+        //     }
+
+        //     if (saleItems.Count == 0)
+        //     {
+        //         _logger.LogWarning("Nenhum item válido encontrado para a venda do usuário {UserId}", saleDto.UserId);
+        //         throw new Exception("Nenhum item válido para salvar.");
+        //     }
+
+        //     var totalCalculado = saleItems.Sum(item => item.Subtotal);
+        //     if (Math.Abs(totalCalculado - sale.PrecoTotal) > 0.01)
+        //     {
+        //         _logger.LogWarning("Total informado ({TotalInformado}) não corresponde ao total calculado ({TotalCalculado})", sale.PrecoTotal, totalCalculado);
+        //         throw new Exception("O total da venda não corresponde à soma dos itens.");
+        //     }
+
+        //     bool sucesso = await _saleRepository.CreateSaleWithItemsAndUpdateProductsAsync(sale, saleItems, productsToUpdate);
+
+        //     if (!sucesso)
+        //     {
+        //         _logger.LogError(new Exception("Falha ao criar venda e atualizar produtos"), "Erro ao criar venda e atualizar produtos para usuário {UserId}", saleDto.UserId);
+        //         throw new Exception("Erro ao criar venda e atualizar produtos.");
+        //     }
+
+        //     _logger.LogInformation("Venda criada com sucesso para usuário {UserId} com {ItemCount} itens", 
+        //         saleDto.UserId, saleItems.Count);
+
+        //     return _mapper.Map<SaleResponseDto>(sale);
+        // }
+
         public async Task<SaleResponseDto> CreateSaleAsync(CreateSaleDto saleDto)
         {
             _logger.LogInformation("Iniciando criação de venda para usuário {UserId}", saleDto.UserId);
@@ -142,7 +277,7 @@ namespace ViberLounge.Application.Services
                 throw new Exception("Usuário não encontrado");
             }
 
-            var groupedItems = saleDto.Items
+            List<dynamic> groupedItems = saleDto.Items
                 .GroupBy(item => item.ProductId)
                 .Select(group => new
                 {
@@ -150,7 +285,7 @@ namespace ViberLounge.Application.Services
                     Quantity = group.Sum(item => item.Quantity),
                     Subtotal = group.Sum(item => item.Subtotal)
                 })
-                .ToList();
+                .ToList<dynamic>();
 
             _logger.LogDebug("Itens agrupados: {GroupedItemsCount} produtos únicos", groupedItems.Count);
 
@@ -164,16 +299,45 @@ namespace ViberLounge.Application.Services
 
             _logger.LogDebug("Venda criada com total de {TotalPrice} e forma de pagamento {PaymentType}", sale.PrecoTotal, sale.FormaPagamento!);
 
+            // Processa items e prepara produtos para ser atualiazados o estoque
+            var (saleItems, productsToUpdate) = await ProcessSaleItems(groupedItems);
+
+            // Valida o subtotal de cada item e da venda total
+            ProcessTotalPriceSale(saleItems, productsToUpdate, sale.PrecoTotal);
+
+            bool sucesso = await _saleRepository.CreateSaleWithItemsAndUpdateProductsAsync(sale, saleItems, productsToUpdate);
+
+            if (!sucesso)
+            {
+                _logger.LogError(new Exception("Falha ao criar venda e atualizar produtos"), "Erro ao criar venda e atualizar produtos para usuário {UserId}", saleDto.UserId);
+                throw new Exception("Erro ao criar venda e atualizar produtos.");
+            }
+
+            _logger.LogInformation("Venda criada com sucesso para usuário {UserId} com {ItemCount} itens",
+                saleDto.UserId, saleItems.Count);
+
+            return _mapper.Map<SaleResponseDto>(sale);
+        }
+        private async Task<(List<VendaItem>, List<Produto>)> ProcessSaleItems(List<dynamic> groupedItems)
+        {
             var saleItems = new List<VendaItem>();
             var productsToUpdate = new List<Produto>();
-            
+
             foreach (var groupedItem in groupedItems)
             {
                 var product = await _productRepository.GetProductByIdAndAvailableStatus(groupedItem.ProductId);
-                if (product == null || product!.Quantidade < groupedItem.Quantity)
+                if (product == null)
                 {
-                    _logger.LogWarning("Produto {ProductId} não encontrado ou quantidade insuficiente. Quantidade solicitada: {Quantity}, Disponível: {Available}", groupedItem.ProductId, groupedItem.Quantity, product?.Quantidade ?? 0);
-                    throw new Exception("Nenhum item válido para salvar.");
+                    _logger.LogWarning("Produto {ProductId} não encontrado. Quantidade solicitada: {Quantity}",
+                        groupedItem.ProductId, groupedItem.Quantity);
+                    throw new Exception("Produto não encontrado.");
+                }
+
+                if (product.Quantidade < groupedItem.Quantity)
+                {
+                    _logger.LogWarning("Produto {ProductId} com quantidade insuficiente. Quantidade solicitada: {Quantity}, Disponível: {Available}",
+                        groupedItem.ProductId, groupedItem.Quantity, product.Quantidade);
+                    throw new Exception("Quantidade insuficiente em estoque.");
                 }
 
                 product.Quantidade -= groupedItem.Quantity;
@@ -192,70 +356,47 @@ namespace ViberLounge.Application.Services
                     Subtotal = Convert.ToDouble(groupedItem.Subtotal)
                 });
 
-                _logger.LogDebug("Item agrupado adicionado à venda: Produto {ProductId}, Quantidade {Quantity}, Subtotal {Subtotal}", 
+                _logger.LogDebug("Item agrupado adicionado à venda: Produto {ProductId}, Quantidade {Quantity}, Subtotal {Subtotal}",
                     groupedItem.ProductId, groupedItem.Quantity, groupedItem.Subtotal);
             }
 
             if (saleItems.Count == 0)
             {
-                _logger.LogWarning("Nenhum item válido encontrado para a venda do usuário {UserId}", saleDto.UserId);
                 throw new Exception("Nenhum item válido para salvar.");
             }
 
-            var totalCalculado = saleItems.Sum(item => item.Subtotal);
-            if (Math.Abs(totalCalculado - sale.PrecoTotal) > 0.01)
-            {
-                _logger.LogWarning("Total informado ({TotalInformado}) não corresponde ao total calculado ({TotalCalculado})", sale.PrecoTotal, totalCalculado);
-                throw new Exception("O total da venda não corresponde à soma dos itens.");
-            }
-
-            bool sucesso = await _saleRepository.CreateSaleWithItemsAndUpdateProductsAsync(sale, saleItems, productsToUpdate);
-
-            if (!sucesso)
-            {
-                _logger.LogError(new Exception("Falha ao criar venda e atualizar produtos"), "Erro ao criar venda e atualizar produtos para usuário {UserId}", saleDto.UserId);
-                throw new Exception("Erro ao criar venda e atualizar produtos.");
-            }
-
-            _logger.LogInformation("Venda criada com sucesso para usuário {UserId} com {ItemCount} itens", 
-                saleDto.UserId, saleItems.Count);
-
-            return _mapper.Map<SaleResponseDto>(sale);
+            return (saleItems, productsToUpdate);
         }
-
-        public async Task<SaleResponseDto?> GetSaleByIdAsync(int id)
+        private void ProcessTotalPriceSale(List<VendaItem> saleItems, List<Produto> products, double totalPriceSale)
         {
-            _logger.LogInformation("Iniciando busca pela venda {SaleId}", id);
-            try{
-
-                var venda = await _saleRepository.GetSaleByIdAsync(id);
-                if (venda == null)
-                    return null;
-                return _mapper.Map<SaleResponseDto>(venda);
-            }catch (Exception ex)
+            //Valida o subtotal de cada item
+            foreach (var item in saleItems)
             {
-                throw new Exception(ex.Message, ex);
-            }
-        }
-
-        public async Task<List<SaleResponseFromDataDto>> GetSalesByDateAsync(SaleRequestFromDataDto saleRequest)
-        {
-            try
-            {
-                _logger.LogInformation("Iniciando busca de vendas entre {StartDate} e {EndDate}", saleRequest.InitialDateTime, saleRequest.FinalDateTime);
-
-                var sales = await _saleRepository.GetSalesByDateAsync(saleRequest.InitialDateTime, saleRequest.FinalDateTime);
-                if (sales == null || !sales.Any())
+                var product = products.FirstOrDefault(p => p.Id == item.IdProduto);
+                if (product == null)
                 {
-                    _logger.LogWarning("Nenhuma venda encontrada entre {StartDate} e {EndDate}", saleRequest.InitialDateTime, saleRequest.FinalDateTime);
-                    return new List<SaleResponseFromDataDto>();
+                    _logger.LogWarning("Produto com ID {ProductId} não encontrado para validação", item.IdProduto);
+                    throw new Exception("Produto não encontrado para validação do subtotal");
                 }
-                
-                return _mapper.Map<List<SaleResponseFromDataDto>>(sales);
+
+                var expectedSubtotal = product.Preco * item.Quantidade;
+                if (Math.Abs(item.Subtotal - expectedSubtotal) > 0.01)
+                {
+                    _logger.LogWarning("Subtotal do item {ItemId} ({Subtotal}) não corresponde ao preço calculado ({ExpectedSubtotal})",
+                        item.IdProduto, item.Subtotal, expectedSubtotal);
+                    throw new Exception($"O subtotal do item não corresponde ao preço unitário x quantidade");
+                }
             }
-            catch (Exception ex)
+            
+            // Remove duplicate calculation
+            var totalPriceSaleItems = saleItems.Sum(item => item.Subtotal);
+
+            // valida o total da venda
+            if (Math.Abs(totalPriceSaleItems - totalPriceSale) > 0.01)
             {
-                throw new Exception(ex.Message, ex);
+                _logger.LogWarning("Total informado ({TotalInformado}) não corresponde ao total calculado ({TotalCalculado})",
+                    totalPriceSale, totalPriceSaleItems);
+                throw new Exception("O total da venda não corresponde à soma dos itens.");
             }
         }
     }
