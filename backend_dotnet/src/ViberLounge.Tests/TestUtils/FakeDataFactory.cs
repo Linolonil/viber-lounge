@@ -8,6 +8,7 @@ namespace ViberLounge.Tests.TestUtils;
 
 public static class FakeDataFactory
 {
+    // Mocks de Produtos
     public static IEnumerable<Produto> GetFakeProducts(int quantidade = 1, int status = 1)
     {
         var product = new Faker<Produto>("pt_BR")
@@ -82,6 +83,73 @@ public static class FakeDataFactory
             .RuleFor(d => d.InitialDateTime, d => d.Date.Past(30, DateTime.Now))
             .RuleFor(d => d.FinalDateTime, d => d.Date.Past(30, DateTime.Now));
 
-        return searchTerm.Generate(1).First();      
+        return searchTerm.Generate(1).First();
+    }
+
+    // Mocks de Vendas
+    public static IEnumerable<Venda> GetFakeSales(
+        int quantidade = 1,
+        bool isCanceled = false)
+    {
+        var sale = new Faker<Venda>("pt_BR")
+            .RuleFor(p => p.Id, f => f.IndexFaker + 1)
+            .RuleFor(p => p.NomeCliente, f => f.Name.FullName())
+            .RuleFor(p => p.IdUsuario, f => GetFakeUsers().First().Id)
+            .RuleFor(p => p.PrecoTotal, f => f.Random.Double(1, 100))
+            .RuleFor(p => p.Cancelado, f => isCanceled)
+            .RuleFor(p => p.FormaPagamento, f => f.PickRandom("PIX", "DEBITO", "CREDITO", "DINHEIRO"))
+            .RuleFor(p => p.CreatedAt, f => f.Date.Past(30, DateTime.Now))
+            .RuleFor(p => p.UpdatedAt, f => f.Date.Past(30, DateTime.Now));
+
+        return sale.Generate(quantidade);
+    }
+    public static IEnumerable<SaleResponseFromDataDto> GenerateSaleResponse(
+        int quantitySaleResponse = 1,
+        int quantitySaleItem = 1,
+        bool isCanceled = false)
+    {
+        var sale = new Faker<SaleResponseFromDataDto>("pt_BR")
+            .RuleFor(p => p.IdSale, f => f.IndexFaker + 1)
+            .RuleFor(p => p.CustomerName, f => f.Name.FullName())
+            .RuleFor(p => p.UserId, f => f.IndexFaker + 1)
+            .RuleFor(p => p.EmployeName, f => f.Name.FullName())
+            .RuleFor(p => p.TotalSalePrice, f => f.Random.Double(1, 100))
+            .RuleFor(p => p.PaymentType, f => f.PickRandom("PIX", "DEBITO", "CREDITO", "DINHEIRO"))
+            .RuleFor(p => p.isCanceled, f => isCanceled)
+            .RuleFor(p => p.CreatedAt, f => f.Date.Past(30, DateTime.Now))
+            .RuleFor(p => p.UpdatedAt, f => f.Date.Past(30, DateTime.Now))
+            .RuleFor(p => p.Items, f => GetFakeSaleItems(quantitySaleItem));
+
+
+        return sale.Generate(quantitySaleResponse);
+    }
+    public static IEnumerable<SaleItemResponseFromData> GetFakeSaleItems(
+        int quantidade = 1,
+        bool isCanceled = false)
+    {
+        var saleItem = new Faker<SaleItemResponseFromData>("pt_BR")
+            .RuleFor(p => p.IdSaleItem, f => f.IndexFaker + 1)
+            .RuleFor(p => p.ProductId, f => f.IndexFaker + 1)
+            .RuleFor(p => p.Quantity, f => f.Random.Int(1, 10))
+            .RuleFor(p => p.isCanceled, f => isCanceled)
+            .RuleFor(p => p.TotalItemPrice, f => f.Random.Double(1, 100))
+            .RuleFor(p => p.CreatedAt, f => f.Date.Past(30, DateTime.Now))
+            .RuleFor(p => p.UpdatedAt, f => f.Date.Past(30, DateTime.Now));
+
+        return saleItem.Generate(quantidade);
+    }
+    // Usuario
+    public static IEnumerable<Usuario> GetFakeUsers(int quantidade = 1)
+    {
+        var user = new Faker<Usuario>("pt_BR")
+            .RuleFor(p => p.Id, f => f.IndexFaker + 1)
+            .RuleFor(p => p.Nome, f => f.Name.FullName())
+            .RuleFor(p => p.Email, f => f.Internet.Email())
+            .RuleFor(p => p.Senha, f => f.Internet.Password())
+            .RuleFor(p => p.Role, f => f.PickRandom("USER", "ADMIN"))
+            .RuleFor(p => p.CreatedAt, f => f.Date.Past(30, DateTime.Now))
+            .RuleFor(p => p.UpdatedAt, f => f.Date.Past(30, DateTime.Now));
+
+        return user.Generate(quantidade);
     }
 }   

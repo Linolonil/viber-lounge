@@ -8,7 +8,7 @@ using ViberLounge.Infrastructure.Repositories.Interfaces;
 
 namespace ViberLounge.Tests.Unit.Application.Sale;
 
-public class GetSaleByDateTest
+public class GetSaleByIdTest
 {
     private readonly IMapper _mapper;
     private readonly Mock<ILoggerService> _loggerMock;
@@ -16,7 +16,7 @@ public class GetSaleByDateTest
     private readonly Mock<IUsuarioRepository> _usuarioRepositoryMock;
     private readonly Mock<IProdutoRepository> _produtoRepositoryMock;
 
-    public GetSaleByDateTest()
+    public GetSaleByIdTest()
     {
         _loggerMock = new Mock<ILoggerService>();
         _saleRepositoryMock = new Mock<IVendaRepository>();
@@ -25,34 +25,32 @@ public class GetSaleByDateTest
         var config = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>());
         _mapper = config.CreateMapper();
     }
-
-    // Obter vendas por range de data, mas não existem vendas
+    // Obter venda por id, mas não existe venda
     [Fact]
-    public async Task GetSaleByDate_ShouldReturnEmptyList_WhenNoSalesExist()
+    public async Task GetSaleById_ShouldReturnNull_WhenSaleDoesNotExist()
     {
-        var saleRequest = FakeDataFactory.GenerateSaleRequestData();
+        var saleId = 1;
         var saleService = new SaleService(_saleRepositoryMock.Object, _usuarioRepositoryMock.Object, _produtoRepositoryMock.Object, _loggerMock.Object, _mapper);
 
-        _saleRepositoryMock.Setup(x => x.GetSalesByDateAsync(saleRequest.InitialDateTime, saleRequest.FinalDateTime)).ReturnsAsync(new List<Venda>());
+        _saleRepositoryMock.Setup(x => x.GetSaleByIdAsync(saleId)).ReturnsAsync((Venda?)null);
 
-        var result = await saleService.GetSalesByDateAsync(saleRequest);
-        Assert.Empty(result);
-        _saleRepositoryMock.Verify(repo => repo.GetSalesByDateAsync(saleRequest.InitialDateTime, saleRequest.FinalDateTime), Times.Once);
+        var result = await saleService.GetSaleByIdAsync(saleId);
+        Assert.Null(result);
+        _saleRepositoryMock.Verify(repo => repo.GetSaleByIdAsync(saleId), Times.Once);
     }
-
-    // Obter vendas por range de data com sucesso
+    // Obter venda por id com sucesso
     [Fact]
-    public async Task GetSaleByDate_ShouldReturnSales_WhenSalesExistOnGivenDate()
+    public async Task GetSaleById_ShouldReturnSale_WhenSaleExists()
     {
-        var saleRequest = FakeDataFactory.GenerateSaleRequestData();
-        var saleResult = FakeDataFactory.GetFakeSales(quantidade: 2);
+        var saleId = 1;
+        var saleResult = FakeDataFactory.GetFakeSales(quantidade: 1).First();
         var saleService = new SaleService(_saleRepositoryMock.Object, _usuarioRepositoryMock.Object, _produtoRepositoryMock.Object, _loggerMock.Object, _mapper);
 
-        _saleRepositoryMock.Setup(x => x.GetSalesByDateAsync(saleRequest.InitialDateTime, saleRequest.FinalDateTime)).ReturnsAsync(saleResult.ToList());
+        _saleRepositoryMock.Setup(x => x.GetSaleByIdAsync(saleId)).ReturnsAsync(saleResult);
 
-        var result = await saleService.GetSalesByDateAsync(saleRequest);
-        
-        Assert.NotEmpty(result);
-        _saleRepositoryMock.Verify(repo => repo.GetSalesByDateAsync(saleRequest.InitialDateTime, saleRequest.FinalDateTime), Times.Once);     
+        var result = await saleService.GetSaleByIdAsync(saleId);
+        Assert.NotNull(result);
+        Assert.Equal(saleResult.Id, result.Id);
+        _saleRepositoryMock.Verify(repo => repo.GetSaleByIdAsync(saleId), Times.Once);
     }
 }
