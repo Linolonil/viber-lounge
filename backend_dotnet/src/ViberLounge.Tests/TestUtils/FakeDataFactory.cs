@@ -128,7 +128,7 @@ public static class FakeDataFactory
     public static VendaItem GenerateVendaItemValid(
         int? idVenda = null,
         int? idProduto = null,
-        double? quantidade = null,
+        int? quantidade = null,
         double? subtotal = null,
         bool cancelado = false)
     {
@@ -136,7 +136,7 @@ public static class FakeDataFactory
             .RuleFor(p => p.Id, f => f.IndexFaker + 1)
             .RuleFor(p => p.IdVenda, f => idVenda ?? f.IndexFaker + 1)
             .RuleFor(p => p.IdProduto, f => idProduto ?? f.Random.Int(0, 100) + 10)
-            .RuleFor(p => p.Quantidade, f => quantidade ?? f.Random.Double(1, 100))
+            .RuleFor(p => p.Quantidade, f => quantidade ?? f.Random.Int(1, 100))
             .RuleFor(p => p.Subtotal, f => subtotal ?? Math.Round(f.Random.Double(1, 100), 2))
             .RuleFor(p => p.Cancelado, f => cancelado)
             .RuleFor(p => p.Venda, f => new Venda())

@@ -114,7 +114,7 @@ namespace ViberLounge.Infrastructure.Repositories
             }
         }
 
-        public async Task<bool> CreateSaleWithItemsAndUpdateProductsAsync(Venda sale, List<VendaItem> items, List<Produto> products)
+        public async Task<Venda?> CreateSaleWithItemsAndUpdateProductsAsync(Venda sale, List<VendaItem> items, List<Produto> products)
         {
             _logger.LogInformation("Iniciando criação de venda {SaleId} com {ItemCount} itens e atualização de {ProductCount} produtos", 
                 sale.Id, items.Count, products.Count);
@@ -148,15 +148,20 @@ namespace ViberLounge.Infrastructure.Repositories
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-
+                
+                // Carrega a venda com os itens atualizados
+                var vendaCompleta = await _context.Vendas
+                    .Include(v => v.Itens)
+                    .FirstOrDefaultAsync(v => v.Id == sale.Id);
+                    
                 _logger.LogInformation("Venda {SaleId}, itens e produtos foram salvos com sucesso", sale.Id);
-                return true;
+                return vendaCompleta;
             }
             catch (DbUpdateException ex)
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Erro ao salvar venda {SaleId}, itens e atualizar produtos", sale.Id);
-                return false;
+                return null;
             }
         }
 

@@ -305,9 +305,9 @@ namespace ViberLounge.Application.Services
             // Valida o subtotal de cada item e da venda total
             ProcessTotalPriceSale(saleItems, productsToUpdate, sale.PrecoTotal);
 
-            bool sucesso = await _saleRepository.CreateSaleWithItemsAndUpdateProductsAsync(sale, saleItems, productsToUpdate);
+            var vendaPersistida = await _saleRepository.CreateSaleWithItemsAndUpdateProductsAsync(sale, saleItems, productsToUpdate);
 
-            if (!sucesso)
+            if (vendaPersistida == null)
             {
                 _logger.LogError(new Exception("Falha ao criar venda e atualizar produtos"), "Erro ao criar venda e atualizar produtos para usuário {UserId}", saleDto.UserId);
                 throw new Exception("Erro ao criar venda e atualizar produtos.");
@@ -316,8 +316,9 @@ namespace ViberLounge.Application.Services
             _logger.LogInformation("Venda criada com sucesso para usuário {UserId} com {ItemCount} itens",
                 saleDto.UserId, saleItems.Count);
 
-            return _mapper.Map<SaleResponseDto>(sale);
+            return _mapper.Map<SaleResponseDto>(vendaPersistida);
         }
+        // Função usada para processar os itens da venda e atualizar os produtos(SaleCreateAsync)
         private async Task<(List<VendaItem>, List<Produto>)> ProcessSaleItems(List<dynamic> groupedItems)
         {
             var saleItems = new List<VendaItem>();
@@ -367,6 +368,7 @@ namespace ViberLounge.Application.Services
 
             return (saleItems, productsToUpdate);
         }
+        // Função usado para validar o subtotal de cada item e o total da venda(CreateSaleAsync)
         private void ProcessTotalPriceSale(List<VendaItem> saleItems, List<Produto> products, double totalPriceSale)
         {
             //Valida o subtotal de cada item
@@ -384,10 +386,10 @@ namespace ViberLounge.Application.Services
                 {
                     _logger.LogWarning("Subtotal do item {ItemId} ({Subtotal}) não corresponde ao preço calculado ({ExpectedSubtotal})",
                         item.IdProduto, item.Subtotal, expectedSubtotal);
-                    throw new Exception($"O subtotal do item não corresponde ao preço unitário x quantidade");
+                    throw new Exception("O subtotal do item não corresponde ao preço unitário x quantidade.");
                 }
             }
-            
+
             // Remove duplicate calculation
             var totalPriceSaleItems = saleItems.Sum(item => item.Subtotal);
 

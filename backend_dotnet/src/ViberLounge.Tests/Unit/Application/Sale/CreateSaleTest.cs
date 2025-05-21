@@ -3,9 +3,9 @@ using ViberLounge.Tests.TestUtils;
 using ViberLounge.Domain.Entities;
 using ViberLounge.Application.Mapping;
 using ViberLounge.Application.Services;
+using ViberLounge.Application.DTOs.Sale;
 using ViberLounge.Infrastructure.Logging;
 using ViberLounge.Infrastructure.Repositories.Interfaces;
-using ViberLounge.Application.DTOs.Sale;
 
 namespace ViberLounge.Tests.Unit.Application.Sale;
 
@@ -101,6 +101,7 @@ public class CreateSaleTest
         Assert.Equal("Quantidade insuficiente em estoque.", execption.Message);
     }
 
+    // Criando venda com dois produtos, mas ocorreu uma exeção pois o total da venda é difernte do total dos itens
     [Theory]
     [InlineData(100.00, 40.00, 50.00)]
     [InlineData(100.00, 80.00, 100.00)]
@@ -129,15 +130,107 @@ public class CreateSaleTest
 
         Assert.Equal("O total da venda não corresponde à soma dos itens.", execption.Message);
     }
+
+    // Criando venda com dois produtos, mas ocorreu uma exeção pois o subtotal do item não corresponde ao preço unitário x quantidade
+    [Theory]
+    [InlineData(100.00, 50.00, 50.00)]
+    [InlineData(180.00, 80.00, 100.00)]
+    [InlineData(110.00, 10.00, 100.00)]
+    public async Task CreatingSaleWithTwoProduct_ButThereAnExceptionBecauseSubtotalValueDoesNotMatchQuantityXPrice
+    (double totalPriceSale, double totalPriceSaleItemI, double totalPriceSaleItemII)
+    {
+        bool userExists = true;
+
+        CreateSaleDto saleResquest = FakeDataFactory.GenerateSaleDtoValid(totalPrice: totalPriceSale);
+        Saleitems saleItemI = FakeDataFactory.GenerateSaleItemsValid(quantity: 3, subtotal: totalPriceSaleItemI);
+        Saleitems saleItemII = FakeDataFactory.GenerateSaleItemsValid(quantity: 4, subtotal: totalPriceSaleItemII);
+        saleItemII.ProductId = 2;
+        saleResquest.Items = new List<Saleitems> { saleItemI, saleItemII };
+
+        Produto produtoDataI = FakeDataFactory.GerenateProductValid(price: totalPriceSaleItemI);
+        Produto produtoDataII = FakeDataFactory.GerenateProductValid(price: totalPriceSaleItemII);
+        produtoDataII.Id = 2;
+
+        var saleService = new SaleService(_saleRepositoryMock.Object, _usuarioRepositoryMock.Object, _produtoRepositoryMock.Object, _loggerMock.Object, _mapper);
+
+        _usuarioRepositoryMock.Setup(u => u.UserExistsAsync(saleResquest.UserId)).ReturnsAsync(userExists);
+        _produtoRepositoryMock.Setup(p => p.GetProductByIdAndAvailableStatus(saleItemI.ProductId)).ReturnsAsync(produtoDataI);
+        _produtoRepositoryMock.Setup(p => p.GetProductByIdAndAvailableStatus(saleItemII.ProductId)).ReturnsAsync(produtoDataII);
+
+        var execption = await Assert.ThrowsAsync<Exception>(() => saleService.CreateSaleAsync(saleResquest));
+
+        Assert.Equal("O subtotal do item não corresponde ao preço unitário x quantidade.", execption.Message);
+    }
+
+    // Criando venda com dois produtos com sucesso, e o preço total da venda é igual ao preço unitário x quantidade
+    [Theory]
+    [InlineData(100.00, 50.00, 50.00)]
+    [InlineData(180.00, 80.00, 100.00)]
+    [InlineData(110.00, 10.00, 100.00)]
+    public async Task CreatingSaleWithTwoProduct_ProcessSucessfully
+    (double totalPriceSale, double totalPriceSaleItemI, double totalPriceSaleItemII)
+    {
+        bool userExists = true;
+
+        CreateSaleDto saleResquest = FakeDataFactory.GenerateSaleDtoValid(totalPrice: totalPriceSale);
+        Saleitems saleItemI = FakeDataFactory.GenerateSaleItemsValid(quantity: 3, subtotal: totalPriceSaleItemI);
+        Saleitems saleItemII = FakeDataFactory.GenerateSaleItemsValid(quantity: 4, subtotal: totalPriceSaleItemII);
+        saleItemII.ProductId = 2;
+
+        saleResquest.Items = new List<Saleitems> { saleItemI, saleItemII };
+
+        Produto produtoDataI = FakeDataFactory.GerenateProductValid(price: totalPriceSaleItemI);
+        Produto produtoDataII = FakeDataFactory.GerenateProductValid(price: totalPriceSaleItemII);
+        produtoDataII.Id = 2;
+
+        //Ajustando o valor do subtotal do segundo item para que seja igual ao preço unitário x quantidade
+        saleItemI.Subtotal = produtoDataI.Preco * saleItemI.Quantity;
+        saleItemII.Subtotal = produtoDataII.Preco * saleItemII.Quantity;
+
+        
+        // Criando mock de venda
+        double totalPrice = saleItemI.Subtotal + saleItemII.Subtotal;
+        Venda saleData = FakeDataFactory.GenerateVendaValid(precoTotal: totalPrice);
+
+        // Atualizando o preço total da venda
+        saleResquest.TotalPrice = totalPrice;
+
+        //Criando mock para repositorio de venda
+        VendaItem vendaItemI = FakeDataFactory.GenerateVendaItemValid(
+            idVenda: saleData.Id,
+            idProduto: produtoDataI.Id,
+            quantidade: saleItemI.Quantity,
+            subtotal: saleItemI.Subtotal);
+        VendaItem vendaItemII = FakeDataFactory.GenerateVendaItemValid(
+            idVenda: saleData.Id,
+            idProduto: produtoDataII.Id,
+            quantidade: saleItemII.Quantity,
+            subtotal: saleItemII.Subtotal);
+
+        List<Produto> produtos = new List<Produto> { produtoDataI, produtoDataII };
+        List<VendaItem> saleItems = new List<VendaItem> { vendaItemI, vendaItemII };
+        saleData.Itens = saleItems;
+
+        var saleService = new SaleService(_saleRepositoryMock.Object, _usuarioRepositoryMock.Object, _produtoRepositoryMock.Object, _loggerMock.Object, _mapper);
+
+        _usuarioRepositoryMock.Setup(u => u.UserExistsAsync(saleResquest.UserId)).ReturnsAsync(userExists);
+        _produtoRepositoryMock.Setup(p => p.GetProductByIdAndAvailableStatus(saleItemI.ProductId)).ReturnsAsync(produtoDataI);
+        _produtoRepositoryMock.Setup(p => p.GetProductByIdAndAvailableStatus(saleItemII.ProductId)).ReturnsAsync(produtoDataII);
+        _saleRepositoryMock.Setup(s => s.CreateSaleWithItemsAndUpdateProductsAsync(
+            It.IsAny<Venda>(),
+            It.IsAny<List<VendaItem>>(),
+            It.IsAny<List<Produto>>()))
+        .ReturnsAsync(saleData);
+
+        var result = await saleService.CreateSaleAsync(saleResquest);
+
+        Assert.NotNull(result);
+        Assert.Equal(saleData.Id, result.Id);
+        Assert.Equal(saleData.PrecoTotal, result.TotalPrice);
+        Assert.Equal(saleData.Itens.ToList().Count(), result.Items!.Count());
+        Assert.Equal(saleData.Itens.ToList()[0].Subtotal, result.Items![0].Subtotal);
+        Assert.Equal(saleData.Itens.ToList()[1].Subtotal, result.Items![1].Subtotal);
+        Assert.Equal(saleData.Itens.ToList()[0].Quantidade, result.Items![0].Quantity);
+        Assert.Equal(saleData.Itens.ToList()[1].Quantidade, result.Items![1].Quantity);
+    }
 }
-
-// Test Plan:
-// Test when sale has no items - ok
-// Test when user doesn't exist - ok
-// Test when product is not available - ok
-// Test when product quantity is insufficient - ok
-// Test when calculated total doesn't match provided total - ok
-// Test when calculated subtotal doesn't match provided subtotal - ok
-
-// Test successful sale creation
-// Test when repository operation fails
