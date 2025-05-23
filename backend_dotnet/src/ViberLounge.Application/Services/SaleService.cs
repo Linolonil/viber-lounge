@@ -9,11 +9,11 @@ namespace ViberLounge.Application.Services
 {
     public class SaleService : ISaleService
     {
+        private readonly IMapper _mapper;
         private readonly ILoggerService _logger;
         private readonly IVendaRepository _saleRepository;
         private readonly IUsuarioRepository _userRepository;
         private readonly IProdutoRepository _productRepository;
-        private readonly IMapper _mapper;
 
         public SaleService(
             IVendaRepository saleRepository,

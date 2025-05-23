@@ -226,7 +226,7 @@ public static class FakeDataFactory
         Saleitems produto = faker.Generate();
         return produto;
     }
-    
+
     public static IEnumerable<CreateSaleDto> GenerateRequestCreateSaleDto(int quantitySale = 1, int quantitySaleitems = 1)
     {
         var saleItem = new Faker<CreateSaleDto>("pt_BR")
@@ -249,6 +249,21 @@ public static class FakeDataFactory
             .RuleFor(p => p.Subtotal, f => f.Random.Int(1, 10));
 
         return saleItem.Generate(quantidade);
+    }
+    public static CancelSaleDto GenerateCancelSaleDto(
+        int? userId = null,
+        string? motivo = null,
+        string? tipoCancelamento = "VENDA",
+        int? cancellationId = null)
+    {
+        var faker = new Faker<CancelSaleDto>("pt_BR")
+            .RuleFor(p => p.UserId, f => userId ?? f.IndexFaker + 1)
+            .RuleFor(p => p.Motivo, f => motivo ?? f.Lorem.Sentence(5))
+            .RuleFor(p => p.TipoCancelamento, f => tipoCancelamento ?? f.PickRandom("ITEM","VENDA"))
+            .RuleFor(p => p.CancellationId, f => cancellationId ?? f.IndexFaker + 1);
+
+        CancelSaleDto produto = faker.Generate();
+        return produto;
     }
 
     // Usuario
