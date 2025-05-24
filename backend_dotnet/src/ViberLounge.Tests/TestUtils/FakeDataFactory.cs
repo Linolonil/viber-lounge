@@ -125,6 +125,29 @@ public static class FakeDataFactory
         Venda venda = faker.Generate();
         return venda;
     }
+    public static IEnumerable<VendaItem> GenerateVendaItensValid(
+        int quantidade = 1,
+        int? idVenda = null,
+        int? idProduto = null,
+        int? quantidadeItem = null,
+        double? subtotal = null,
+        bool cancelado = false)
+    {
+        var faker = new Faker<VendaItem>("pt_BR")
+            .RuleFor(p => p.Id, f => f.IndexFaker + 1)
+            .RuleFor(p => p.IdVenda, f => idVenda ?? f.IndexFaker + 1)
+            .RuleFor(p => p.IdProduto, f => idProduto ?? f.Random.Int(0, 100) + 10)
+            .RuleFor(p => p.Quantidade, f => quantidadeItem ?? f.Random.Int(1, 100))
+            .RuleFor(p => p.Subtotal, f => subtotal ?? Math.Round(f.Random.Double(1, 100), 2))
+            .RuleFor(p => p.Cancelado, f => cancelado)
+            .RuleFor(p => p.Venda, f => new Venda())
+            .RuleFor(p => p.Produto, f => new Produto())
+            .RuleFor(p => p.Cancelamento, f => new VendaCancelada())
+            .RuleFor(p => p.CreatedAt, f => f.Date.Past(30, DateTime.Now))
+            .RuleFor(p => p.UpdatedAt, f => f.Date.Past(30, DateTime.Now));
+
+        return faker.Generate(quantidade);
+    }
     public static VendaItem GenerateVendaItemValid(
         int? idVenda = null,
         int? idProduto = null,
@@ -250,22 +273,34 @@ public static class FakeDataFactory
 
         return saleItem.Generate(quantidade);
     }
-    public static CancelSaleDto GenerateCancelSaleDto(
+    public static CancelEntireSaleDto GenerateCancelSaleDto(
         int? userId = null,
         string? motivo = null,
-        string? tipoCancelamento = "VENDA",
         int? cancellationId = null)
     {
-        var faker = new Faker<CancelSaleDto>("pt_BR")
+        var faker = new Faker<CancelEntireSaleDto>("pt_BR")
             .RuleFor(p => p.UserId, f => userId ?? f.IndexFaker + 1)
             .RuleFor(p => p.Motivo, f => motivo ?? f.Lorem.Sentence(5))
-            .RuleFor(p => p.TipoCancelamento, f => tipoCancelamento ?? f.PickRandom("ITEM","VENDA"))
             .RuleFor(p => p.CancellationId, f => cancellationId ?? f.IndexFaker + 1);
 
-        CancelSaleDto produto = faker.Generate();
+        CancelEntireSaleDto produto = faker.Generate();
         return produto;
     }
+    
+    public static CancelSaleItemsDto GenerateCancelItemSaleDto(
+        int? userId = null,
+        string? motivo = null,
+        List<int>? itemIds = null)
+    {
+        var faker = new Faker<CancelSaleItemsDto>("pt_BR")
+            .RuleFor(p => p.UserId, f => userId ?? f.IndexFaker + 1)
+            .RuleFor(p => p.Motivo, f => motivo ?? f.Lorem.Sentence(5))
+            .RuleFor(p => p.ItemIds, f => itemIds ?? new List<int> { f.IndexFaker + 1 });
 
+        CancelSaleItemsDto produto = faker.Generate();
+        return produto;
+    }
+    
     // Usuario
     public static IEnumerable<Usuario> GetFakeUsers(int quantidade = 1)
     {
