@@ -23,7 +23,7 @@ namespace ViberLounge.Infrastructure.Repositories
                 return await _context.Vendas
                     .AsNoTracking()
                     .Include(v => v.Itens)
-                    .Include(v => v.VendaCancelada)
+                    // .Include(v => v.VendaCancelada)
                     .FirstOrDefaultAsync(v => v.Id == id);
             }catch (Exception ex)
             {
@@ -45,74 +45,41 @@ namespace ViberLounge.Infrastructure.Repositories
                 throw;
             }
         }
-        public async Task<bool> CancelSaleAsync(Venda sale, VendaCancelada cancelamento)
-        {
-            _logger.LogInformation("Iniciando cancelamento da venda {SaleId}", sale.Id);
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
+        // public async Task<bool> CreateSaleWithItemsAsync(Venda sale, List<VendaItem> items)
+        // {
+        //     _logger.LogInformation("Iniciando criação de venda {SaleId} com {ItemCount} itens", sale.Id, items.Count);
 
-            try
-            {
-                // Atualiza a venda
-                _context.Vendas.Update(sale);
+        //     using var transaction = await _context.Database.BeginTransactionAsync();
 
-                // Adiciona o registro de cancelamento
-                await _context.VendasCanceladas.AddAsync(cancelamento);
+        //     try
+        //     {
+        //         await _context.Vendas.AddAsync(sale);
+        //         await _context.SaveChangesAsync();
 
-                // Atualiza os itens da venda
-                foreach (var item in sale.Itens.Where(i => i.Cancelado))
-                {
-                    _context.ItensVendas.Update(item);
-                }
+        //         _logger.LogDebug("Venda {SaleId} criada com sucesso", sale.Id);
 
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
+        //         foreach (var item in items)
+        //         {
+        //             item.IdVenda = sale.Id;
+        //         }
 
-                _logger.LogInformation("Venda {SaleId} cancelada com sucesso", sale.Id);
-                return true;
-            }
-            catch (DbUpdateException ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Erro ao cancelar venda {SaleId}", sale.Id);
-                return false;
-            }
-        }
+        //         await _context.ItensVendas.AddRangeAsync(items);
+        //         await _context.SaveChangesAsync();
 
-        public async Task<bool> CreateSaleWithItemsAsync(Venda sale, List<VendaItem> items)
-        {
-            _logger.LogInformation("Iniciando criação de venda {SaleId} com {ItemCount} itens", sale.Id, items.Count);
+        //         _logger.LogDebug("Itens adicionados à venda {SaleId}", sale.Id);
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
-            try
-            {
-                await _context.Vendas.AddAsync(sale);
-                await _context.SaveChangesAsync();
-
-                _logger.LogDebug("Venda {SaleId} criada com sucesso", sale.Id);
-
-                foreach (var item in items)
-                {
-                    item.IdVenda = sale.Id;
-                }
-
-                await _context.ItensVendas.AddRangeAsync(items);
-                await _context.SaveChangesAsync();
-
-                _logger.LogDebug("Itens adicionados à venda {SaleId}", sale.Id);
-
-                await transaction.CommitAsync();
-                _logger.LogInformation("Venda {SaleId} e seus itens foram salvos com sucesso", sale.Id);
-                return true;
-            }
-            catch (DbUpdateException ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Erro ao salvar venda {SaleId} e seus itens", sale.Id);
-                return false;
-            }
-        }
+        //         await transaction.CommitAsync();
+        //         _logger.LogInformation("Venda {SaleId} e seus itens foram salvos com sucesso", sale.Id);
+        //         return true;
+        //     }
+        //     catch (DbUpdateException ex)
+        //     {
+        //         await transaction.RollbackAsync();
+        //         _logger.LogError(ex, "Erro ao salvar venda {SaleId} e seus itens", sale.Id);
+        //         return false;
+        //     }
+        // }
 
         public async Task<Venda?> CreateSaleWithItemsAndUpdateProductsAsync(Venda sale, List<VendaItem> items, List<Produto> products)
         {
@@ -187,6 +154,105 @@ namespace ViberLounge.Infrastructure.Repositories
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro ao buscar vendas entre {StartDate} e {EndDate}", startDate, endDate);
+                throw;
+            }
+        }
+        public async Task<Venda?> CancelSaleAsync(Venda sale, VendaCancelada cancel, List<Produto> products)
+        {
+            _logger.LogInformation("Iniciando cancelamento da venda {SaleId}", sale.Id);
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Atualizando os produtos
+                foreach (var product in products)
+                {
+                    _logger.LogDebug("Atualizando produto {ProductId} - Nova quantidade: {Quantity}", product.Id, product.Quantidade);
+                    _context.Produtos.Update(product);
+                }
+
+                // Cancelando os itens da venda
+                foreach (var item in sale.Itens)
+                {
+                    item.Cancelado = true;
+                    _context.ItensVendas.Update(item);
+                }
+
+                // Cancelando a venda
+                sale.Cancelado = true;
+                _context.Vendas.Update(sale);
+
+                // Registrando o cancelamento
+                await _context.VendasCanceladas.AddAsync(cancel);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Venda {SaleId} cancelada com sucesso", sale.Id);
+
+                // Retorna a venda atualizada
+                return await _context.Vendas
+                    .Include(v => v.Itens)
+                    .Include(v => v.VendaCancelada)
+                    .FirstOrDefaultAsync(v => v.Id == sale.Id);
+            }
+            catch (DbUpdateException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Erro ao cancelar venda {SaleId}", sale.Id);
+                return null;
+            }
+        }
+        
+        public async Task<List<VendaItem>> CancelSaleItemAsync(List<VendaItem> items, List<VendaCancelada> cancelamentos, List<Produto> products)
+        {
+            _logger.LogInformation("Iniciando cancelamento de {Count} itens", items.Count);
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Atualizando os produtos
+                foreach (var product in products)
+                {
+                    _context.Produtos.Update(product);
+                }
+
+                // Cancelando os itens da venda
+                foreach (var item in items)
+                {
+                    item.Cancelado = true;
+                    _context.ItensVendas.Update(item);
+                }
+
+                // Registrando os cancelamentos
+                await _context.VendasCanceladas.AddRangeAsync(cancelamentos);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("{Count} itens cancelados com sucesso", items.Count);
+
+                // Retorna os itens atualizados
+                var updatedItems = await _context.ItensVendas
+                    .Include(i => i.Produto)
+                    .Include(i => i.Cancelamento)
+                    .Where(i => items.Select(x => x.Id).Contains(i.Id))
+                    .ToListAsync();
+
+                if (updatedItems.Count != items.Count)
+                {
+                    _logger.LogError(new Exception(), "Nem todos os itens foram encontrados após o cancelamento.");
+                    throw new InvalidOperationException("Nem todos os itens de venda foram encontrados após o cancelamento.");
+                }
+
+                return updatedItems;
+            }
+            catch (DbUpdateException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Erro ao cancelar itens");
                 throw;
             }
         }
